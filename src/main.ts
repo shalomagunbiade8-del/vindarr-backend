@@ -1,0 +1,35 @@
+import * as dns from 'dns';
+dns.setDefaultResultOrder('ipv4first'); 
+
+import { NestFactory, Reflector } from '@nestjs/core';
+import { AppModule } from './app.module';
+import { ClassSerializerInterceptor } from '@nestjs/common';
+import { join } from 'path';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import * as express from 'express'; 
+import { ValidationPipe } from '@nestjs/common';
+
+async function bootstrap() {
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // Enable CORS
+  app.enableCors({
+    origin: '*',
+  });
+
+  // Serve uploaded files
+  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
+  prefix: '/uploads/',
+});
+
+  app.useGlobalInterceptors(
+    new ClassSerializerInterceptor(app.get(Reflector)),
+  );
+
+  app.useGlobalPipes(new ValidationPipe());
+
+  await app.listen(3000);
+}
+
+bootstrap();

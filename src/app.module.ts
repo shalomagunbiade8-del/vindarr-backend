@@ -1,0 +1,65 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
+import { StoriesModule } from './stories/stories.module';
+import { VideosModule } from './videos/videos.module';
+import { ProfileModule } from './profile/profile.module';
+import { Understand } from './understand/understand.entity'; 
+import { Video } from './videos/video.entity';
+import { User } from './users/user.entity';
+import { CommentsModule } from './comments/comments.module';
+import { Comment } from './comments/comment.entity'; 
+import { CoachesModule } from './coaches/coaches.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { ResourcesModule } from './resources/resources.module';
+import { Coach } from './coaches/coach.entity';
+import { Session } from './sessions/session.entity';
+import { Resource } from './resources/resource.entity';
+import { UploadController } from './upload/upload.controller';
+import { MessagesModule } from './messages/messages.module';
+import { PaymentsController } from './payments/payments.controller';
+import { PaymentsService } from './payments/payments.service';
+import { PaymentsModule } from './payments/payments.module';
+
+
+
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: 'localhost',
+      port: 5432,
+      username: 'postgres',
+      password: 'omotola123', // change if yours is different
+      database: 'oraizon',
+      autoLoadEntities: true,
+      entities: [User, Video, Understand, Comment, Coach, Session, Resource,],
+      synchronize: true, // dev only
+    }),
+    UsersModule,
+    AuthModule,
+    StoriesModule,
+    VideosModule,
+    ProfileModule,
+    CommentsModule,
+    CoachesModule,
+    SessionsModule,
+    ResourcesModule,
+    MessagesModule,
+    PaymentsModule,
+  ],
+  
+controllers: [
+  UploadController
+],
+  
+providers: [PaymentsService],
+
+})
+export class AppModule {}

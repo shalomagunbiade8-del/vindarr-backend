@@ -32,16 +32,15 @@ import { PaymentsModule } from './payments/payments.module';
       isGlobal: true,
     }),
     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'omotola123', // change if yours is different
-      database: 'oraizon',
-      autoLoadEntities: true,
-      entities: [User, Video, Understand, Comment, Coach, Session, Resource,],
-      synchronize: true, // dev only
-    }),
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  autoLoadEntities: true,
+  entities: [User, Video, Understand, Comment, Coach, Session, Resource],
+  synchronize: true, // ok for now
+  ssl: {
+    rejectUnauthorized: false,
+  },
+}),
     UsersModule,
     AuthModule,
     StoriesModule,

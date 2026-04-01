@@ -9,7 +9,8 @@ import {
   UseGuards,
   Req,
   UseInterceptors,
-  UploadedFile
+  UploadedFile,
+  BadRequestException
 } from '@nestjs/common'; 
 
 import { AuthGuard } from '@nestjs/passport';
@@ -19,7 +20,6 @@ import { CreateVideoDto } from './dto/create-video.dto';
 
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinary';  
 
 @Controller('videos')
@@ -28,48 +28,34 @@ export class VideosController {
   constructor(private readonly videosService: VideosService) {}
 
   @UseGuards(AuthGuard('jwt'))
-  @Post()
-  @UseInterceptors(
+@Post()
+@UseInterceptors(FileInterceptor('video'))
+async uploadVideo(
+  @UploadedFile() file: Express.Multer.File,
+  @Body() body: CreateVideoDto,
+  @Req() req
+){
 
-  FileInterceptor('video', {
-  storage: new CloudinaryStorage({
-    cloudinary: cloudinary,
-    params: async (_req, _file) => ({
-      folder: 'vindarr_videos',
-      resource_type: 'video',
-      format: 'mp4',
-    }),
-  }),
-  limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB
-  },
-})
-)
-    
-
-  uploadVideo(
-    @UploadedFile() file: Express.Multer.File,
-    @Body() body: CreateVideoDto,
-    @Req() req
-  ){
-
-    if (!file) {
-      throw new Error('Video file is required');
-    }
-
-    const videoUrl = file.path; // 🔥 Cloudinary URL 
-
-
-
-    return this.videosService.create(
-      {
-        ...body,
-        videoUrl
-      },
-      req.user.userId
-    );
-
+  if (!file) {
+    throw new BadRequestException('Video file is required');
   }
+
+  const result = await cloudinary.uploader.upload(file.path, {
+    resource_type: 'video',
+    folder: 'vindarr_videos',
+  });
+
+  const videoUrl = result.secure_url;
+
+  return this.videosService.create(
+    {
+      ...body,
+      videoUrl
+    },
+    req.user.userId
+  );
+} 
+
 
   @Get()
 findAll(

@@ -19,8 +19,8 @@ import { CreateVideoDto } from './dto/create-video.dto';
 
 import { FileInterceptor } from '@nestjs/platform-express';
 
-import { diskStorage } from 'multer';
-import { extname } from 'path'; 
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
+import cloudinary from '../config/cloudinary';  
 
 @Controller('videos')
 export class VideosController {
@@ -30,17 +30,22 @@ export class VideosController {
   @UseGuards(AuthGuard('jwt'))
   @Post()
   @UseInterceptors(
+
   FileInterceptor('video', {
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, cb) => {
-        const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = extname(file.originalname);
-        cb(null, `${uniqueName}${ext}`);
-      },
+  storage: new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: async (_req, _file) => ({
+      folder: 'vindarr_videos',
+      resource_type: 'video',
+      format: 'mp4',
     }),
   }),
-) 
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB
+  },
+})
+)
+    
 
   uploadVideo(
     @UploadedFile() file: Express.Multer.File,
@@ -52,7 +57,8 @@ export class VideosController {
       throw new Error('Video file is required');
     }
 
-    const videoUrl = `/uploads/${file.filename}`;
+    const videoUrl = file.path; // 🔥 Cloudinary URL 
+
 
 
     return this.videosService.create(

@@ -18,11 +18,6 @@ async function bootstrap() {
     origin: '*',
   });
 
-  // Serve uploaded files
-  app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-  prefix: '/uploads/',
-});
-
   app.useGlobalInterceptors(
     new ClassSerializerInterceptor(app.get(Reflector)),
   );

@@ -2,9 +2,9 @@ import { Controller, Get, Post, Body, Delete, Param, UseGuards, Req, UseIntercep
 import { AuthGuard } from '@nestjs/passport';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
-import { FileInterceptor } from '@nestjs/platform-express'; 
-import { diskStorage } from 'multer';
-import { extname } from 'path'; 
+import { FileInterceptor } from '@nestjs/platform-express';  
+import { v2 as cloudinary } from 'cloudinary';
+import * as streamifier from 'streamifier';
 
 @Controller('stories')
 export class StoriesController {
@@ -12,31 +12,38 @@ export class StoriesController {
 
   @Post()
 @UseGuards(AuthGuard('jwt'))
-@UseInterceptors(FileInterceptor('image', {
-  storage: diskStorage({
-    destination: './uploads',
-    filename: (req, file, callback) => {
-      const uniqueName =
-        Date.now() + '-' + Math.round(Math.random() * 1e9);
-      callback(null, uniqueName + extname(file.originalname));
-    }
-  })
-})) 
-
-create(
+@UseInterceptors(FileInterceptor('image'))
+async create(
   @UploadedFile() file: Express.Multer.File,
   @Body() dto: CreateStoryDto,
   @Req() req
 ) {
 
-  const imageUrl = file ? `/uploads/${file.filename}` : null; 
+  let imageUrl: string | undefined = undefined;
+
+  if (file) {
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'image',
+          folder: 'vindarr_stories',
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
+
+      streamifier.createReadStream(file.buffer).pipe(stream);
+    });
+
+    imageUrl = uploadResult.secure_url;
+  }
 
   return this.storiesService.create(
     {
       ...dto,
-      // title: dto.title,
-      content: dto.content,
-      imageUrl: imageUrl || undefined,
+      imageUrl,
     },
     req.user.userId
   );

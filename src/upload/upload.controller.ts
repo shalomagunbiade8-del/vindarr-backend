@@ -1,48 +1,36 @@
-import {
-  Controller,
-  Post,
-  UseInterceptors,
-  UploadedFile
-} from '@nestjs/common';
-
+import { Controller, Post, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import * as streamifier from 'streamifier';
 
 @Controller('upload')
 export class UploadController {
 
   @Post('avatar')
-  @UseInterceptors(FileInterceptor('file', {
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
 
-    storage: diskStorage({
-      destination: './uploads',
-      filename: (req, file, cb) => {
-
-        const uniqueName =
-          Date.now() + '-' + file.originalname;
-
-        cb(null, uniqueName);
-      }
-    }),
-
-    fileFilter: (req, file, cb) => {
-
-      if (!file.mimetype.match(/\/(jpg|jpeg|png)$/)) {
-        return cb(new Error('Only image files allowed'), false);
-      }
-
-      cb(null, true);
-
+    if (!file) {
+      throw new Error('No file uploaded');
     }
 
-  }))
+    const uploadResult = await new Promise<any>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'image',
+          folder: 'vindarr_avatars',
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
 
-  uploadAvatar(@UploadedFile() file) {
+      streamifier.createReadStream(file.buffer).pipe(stream);
+    });
 
     return {
-      avatar: `/uploads/${file.filename}`
+      avatar: uploadResult.secure_url,
     };
-
   }
-
 } 

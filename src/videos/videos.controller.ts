@@ -19,43 +19,57 @@ import { VideosService } from './videos.service';
 import { CreateVideoDto } from './dto/create-video.dto';
 
 import { FileInterceptor } from '@nestjs/platform-express';
-
-import cloudinary from '../config/cloudinary';  
+ 
+import { v2 as cloudinary } from 'cloudinary';
+import * as streamifier from 'streamifier'; 
 
 @Controller('videos')
 export class VideosController {
 
   constructor(private readonly videosService: VideosService) {}
 
-  @UseGuards(AuthGuard('jwt'))
-@Post()
-@UseInterceptors(FileInterceptor('video'))
+  @Post()
+@UseGuards(AuthGuard('jwt'))
+@UseInterceptors(
+  FileInterceptor('video', {
+    limits: { fileSize: 50 * 1024 * 1024 },
+  }),
+)
 async uploadVideo(
   @UploadedFile() file: Express.Multer.File,
   @Body() body: CreateVideoDto,
   @Req() req
-){
-
+) {
   if (!file) {
-    throw new BadRequestException('Video file is required');
+    throw new Error('Video file is required');
   }
 
-  const result = await cloudinary.uploader.upload(file.path, {
-    resource_type: 'video',
-    folder: 'vindarr_videos',
+  // Upload to Cloudinary manually
+  const uploadResult = await new Promise<any>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: 'video',
+        folder: 'vindarr_videos',
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      },
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(stream);
   });
 
-  const videoUrl = result.secure_url;
+  const videoUrl = uploadResult.secure_url;
 
   return this.videosService.create(
     {
       ...body,
-      videoUrl
+      videoUrl,
     },
-    req.user.userId
+    req.user.userId,
   );
-} 
-
+}
 
   @Get()
 findAll(

@@ -33,14 +33,26 @@ import { PaymentsModule } from './payments/payments.module';
     }),
     TypeOrmModule.forRoot({
   type: 'postgres',
+
+  // Ensure env variable is read properly
   url: process.env.DATABASE_URL,
+
   autoLoadEntities: true,
+
   entities: [User, Video, Understand, Comment, Coach, Session, Resource],
-  synchronize: true, // ok for now
-  ssl: {
-    rejectUnauthorized: false,
-  },
+
+  synchronize: true, // ok for now (later turn off in production)
+
+  // ✅ FIX: Proper SSL handling for Render
+  ssl: process.env.NODE_ENV === 'production'
+    ? { rejectUnauthorized: false }
+    : false,
+
+  // ✅ Extra stability (prevents crash loops)
+  retryAttempts: 5,
+  retryDelay: 3000,
 }),
+
     UsersModule,
     AuthModule,
     StoriesModule,

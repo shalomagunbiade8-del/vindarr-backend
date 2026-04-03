@@ -66,7 +66,7 @@ export class PaymentsService {
       const data = response.data;
 
       if (data.data.status === 'success') {
-        await this.sessionsService.updateSessionStatus(sessionId, 'paid');
+       await this.sessionsService.markSessionAsPaid(sessionId);
       }
 
       return data;

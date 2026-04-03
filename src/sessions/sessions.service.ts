@@ -79,4 +79,18 @@ export class SessionsService {
 
     return this.sessionRepository.save(session);
   }
+
+  async markSessionAsPaid(sessionId: number) {
+  const session = await this.sessionRepository.findOne({
+    where: { id: sessionId }
+  });
+
+  if (!session) {
+    throw new NotFoundException('Session not found');
+  }
+
+  session.status = 'paid';
+
+  return this.sessionRepository.save(session);
+} 
 } 

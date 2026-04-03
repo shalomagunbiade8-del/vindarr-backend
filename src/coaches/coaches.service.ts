@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Coach } from './coach.entity';
@@ -11,21 +11,29 @@ export class CoachesService {
     private coachRepository: Repository<Coach>,
   ) {}
 
-  async create(data, userId: number) {
+  async create(data: any, userId: number) {
+
+  const existing = await this.coachRepository.findOne({
+    where: { userId }
+  });
+
+  if (existing) {
+    throw new BadRequestException('You already applied as a travel coach');
+  }
 
   const coach = this.coachRepository.create({
     ...data,
-    userId
+    userId,
+    verified: false // 🔥 ensure default
   });
 
   return this.coachRepository.save(coach);
-
 } 
 
 
   async findAll() {
   return this.coachRepository.find({
-    where: { verified: true },
+    where: { verified: true }, // 🔥 CRITICAL
     relations: ['user']
   });
 } 
@@ -65,6 +73,13 @@ async updateCoach(id: number, data: Partial<Coach>) {
   return this.findOne(id);
 
 }
+
+async findPending() {
+  return this.coachRepository.find({
+    where: { verified: false },
+    relations: ['user']
+  });
+} 
 
 } 
 

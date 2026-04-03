@@ -21,7 +21,8 @@ export class Session {
   time: string;
 
   @Column({ default: 'pending' })
-status: string; 
+status: string; // pending | accepted | paid | completed 
+
 
 @Column({ nullable: true })
 meetingLink: string; 

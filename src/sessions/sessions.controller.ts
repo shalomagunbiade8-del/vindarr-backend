@@ -1,6 +1,8 @@
 import { Controller, Post, Get, Body, Param, Patch } from '@nestjs/common';
 import { SessionsService } from './sessions.service'; 
 import { Delete } from '@nestjs/common';
+import { Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('sessions')
 export class SessionsController {
@@ -32,12 +34,18 @@ remove(@Param('id') id: number) {
   return this.sessionsService.deleteSession(id);
 }
 
+@UseGuards(AuthGuard('jwt'))
 @Patch(':id')
 updateStatus(
   @Param('id') id: number,
-  @Body() body: { status: string }
+  @Body() body: { status: string },
+  @Req() req
 ) {
-  return this.sessionsService.updateSessionStatus(id, body.status);
+  return this.sessionsService.updateSessionStatus(
+    id,
+    body.status,
+    req.user.userId
+  );
 } 
 
 } 

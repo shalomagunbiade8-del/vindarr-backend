@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, UseGuards, Req, ForbiddenException } from '@nestjs/common';
 import { CoachesService } from './coaches.service';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateCoachDto } from './dto/create-coach.dto';
@@ -24,15 +24,35 @@ export class CoachesController {
     return this.coachesService.findAll();
   }
 
-  @Get(':id')
-getCoach(@Param('id') id: number) {
-  return this.coachesService.findOne(id);
+  @UseGuards(AuthGuard('jwt'))
+@Get('pending')
+getPending(@Req() req) {
+  if (req.user.role !== 'admin') {
+    throw new ForbiddenException('Only admins');
+  }
+  return this.coachesService.findPending();
+} 
+
+  @Get('user/:userId')
+getCoachByUser(@Param('userId') userId: number) {
+  return this.coachesService.findByUser(userId);
 }
 
+@Get(':id')
+getCoach(@Param('id') id: number) {
+  return this.coachesService.findOne(id);
+} 
+
+@UseGuards(AuthGuard('jwt'))
 @Patch(':id/verify')
-verifyCoach(@Param('id') id: number) {
+verifyCoach(@Req() req, @Param('id') id: number) {
+
+  if (req.user.role !== 'admin') {
+    throw new ForbiddenException('Only admins can verify coaches');
+  }
+
   return this.coachesService.verifyCoach(id);
-}
+} 
 
 @Patch(':id')
 updateCoach(
@@ -42,10 +62,5 @@ updateCoach(
   return this.coachesService.updateCoach(id, body);
 } 
 
-
-@Get('user/:userId')
-getCoachByUser(@Param('userId') userId: number) {
-  return this.coachesService.findByUser(userId);
-}
 
 } 

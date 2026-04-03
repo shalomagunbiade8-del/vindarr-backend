@@ -56,6 +56,24 @@ export class UsersService {
   });
 } 
 
+// temporary
+async makeAdmin(username: string) {
+  const user = await this.usersRepository.findOne({
+    where: { username }
+  });
+
+  if (!user) {
+    throw new BadRequestException('User not found');
+  }
+
+  user.role = 'admin';
+
+  await this.usersRepository.save(user);
+
+  return { message: `${username} is now admin` };
+} 
+
+
 }
 
 

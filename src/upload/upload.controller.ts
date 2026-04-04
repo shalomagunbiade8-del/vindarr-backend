@@ -2,13 +2,14 @@ import { Controller, Post, UseInterceptors, UploadedFile } from '@nestjs/common'
 import { FileInterceptor } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import * as streamifier from 'streamifier';
+import { Request } from 'express';
 
 @Controller('upload')
 export class UploadController {
 
   @Post('avatar')
   @UseInterceptors(FileInterceptor('file'))
-  async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+  async uploadAvatar(@UploadedFile() file: any) {
 
     if (!file) {
       throw new Error('No file uploaded');

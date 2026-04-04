@@ -6,6 +6,8 @@
     "outDir": "./dist",
     "rootDir": "./src",
 
+    "types": ["node", "express", "multer"],
+
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

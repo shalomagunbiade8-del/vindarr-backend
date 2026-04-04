@@ -14,7 +14,7 @@ export class StoriesController {
 @UseGuards(AuthGuard('jwt'))
 @UseInterceptors(FileInterceptor('image'))
 async create(
-  @UploadedFile() file: Express.Multer.File,
+  @UploadedFile() file: any,
   @Body() dto: CreateStoryDto,
   @Req() req
 ) {

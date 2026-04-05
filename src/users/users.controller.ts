@@ -25,8 +25,14 @@ async getProfile(@Req() req: any) {
 } 
 
 // temporary
+@UseGuards(AuthGuard('jwt'))
 @Patch('make-admin/:username')
-makeAdmin(@Param('username') username: string) {
+makeAdmin(@Param('username') username: string, @Req() req: any) {
+
+  if (req.user.role !== 'admin') {
+    throw new Error('Unauthorized');
+  }
+
   return this.usersService.makeAdmin(username);
 }
 

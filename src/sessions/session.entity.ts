@@ -27,7 +27,7 @@ status: string; // pending | accepted | rejected | completed
 paymentStatus: string; // unpaid | paid 
 
 
-@Column({ nullable: true })
+@Column({ type: 'text', nullable: true })
 meetingLink: string | null; 
 
   @ManyToOne(() => User)

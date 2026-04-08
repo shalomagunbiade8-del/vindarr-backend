@@ -38,12 +38,20 @@ export class SessionsService {
   }
 
   async getLearnerSessions(userId: number) {
-    return this.sessionRepository.find({
-      where: { learnerId: userId },
-      relations: ['coach', 'coach.user'],
-      order: { date: 'ASC' }
-    });
-  }
+  const sessions = await this.sessionRepository.find({
+    where: { learnerId: userId },
+    relations: ['coach', 'coach.user'],
+    order: { date: 'ASC' }
+  });
+
+  return sessions.map(session => {
+    if (session.status !== 'accepted') {
+      session.meetingLink = null;
+    }
+    return session;
+  });
+} 
+
 
   async getCoachSessions(coachId: number) {
     return this.sessionRepository.find({
@@ -75,6 +83,10 @@ export class SessionsService {
       throw new ForbiddenException('Not your session');
     }
 
+    if (status === 'accepted' && session.paymentStatus !== 'paid') {
+  throw new ForbiddenException('User has not paid yet');
+} 
+
     session.status = status;
 
     return this.sessionRepository.save(session);
@@ -89,8 +101,9 @@ export class SessionsService {
     throw new NotFoundException('Session not found');
   }
 
-  session.status = 'paid';
+  session.paymentStatus = 'paid'; // ✅ FIXED
 
   return this.sessionRepository.save(session);
 } 
+
 } 

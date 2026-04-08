@@ -21,11 +21,14 @@ export class Session {
   time: string;
 
   @Column({ default: 'pending' })
-status: string; // pending | accepted | paid | completed 
+status: string; // pending | accepted | rejected | completed
+
+@Column({ default: 'unpaid' })
+paymentStatus: string; // unpaid | paid 
 
 
 @Column({ nullable: true })
-meetingLink: string; 
+meetingLink: string | null; 
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'learnerId' })

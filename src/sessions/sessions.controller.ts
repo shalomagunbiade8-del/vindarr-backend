@@ -48,4 +48,16 @@ updateStatus(
   );
 } 
 
+// bank payout related
+@Get('admin/payouts')
+getPayouts() {
+  return this.sessionsService.getCoachPayoutSummary();
+} 
+
+@Post('admin/payouts/mark-paid')
+markPaid(@Body() body: { sessionIds: number[] }) {
+  return this.sessionsService.markAsPaid(body.sessionIds);
+} 
+
+
 } 

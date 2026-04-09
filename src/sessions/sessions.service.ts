@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 
 import { Session } from './session.entity';
 import { Coach } from '../coaches/coach.entity';
+import { In } from 'typeorm'; 
 
 @Injectable()
 export class SessionsService {
@@ -89,6 +90,11 @@ export class SessionsService {
 
     session.status = status;
 
+// mark session as completed (for payouts)
+if (status === 'accepted' && session.paymentStatus === 'paid') {
+  session.isCompleted = true;
+}
+
     return this.sessionRepository.save(session);
   }
 
@@ -104,6 +110,64 @@ export class SessionsService {
   session.paymentStatus = 'paid'; // ✅ FIXED
 
   return this.sessionRepository.save(session);
+} 
+
+// bank payout related 
+async getPendingPayouts() {
+  return this.sessionRepository.find({
+    where: {
+      paymentStatus: 'paid',
+      status: 'accepted',
+      isCompleted: true,
+      paidOut: false,
+    },
+    relations: ['coach', 'coach.user'],
+  });
+} 
+
+async getCoachPayoutSummary() {
+  const sessions = await this.getPendingPayouts();
+
+  const summary = {};
+
+  sessions.forEach(session => {
+    const coachId = session.coach.id;
+
+    if (!summary[coachId]) {
+      summary[coachId] = {
+  coach: {
+    id: session.coach.id,
+    name: session.coach.user?.username,
+    bankName: session.coach.user?.bankName,
+    accountNumber: session.coach.user?.accountNumber,
+    accountName: session.coach.user?.accountName,
+  },
+  total: 0,
+  sessions: [],
+}; 
+
+    }
+
+    const COMMISSION = 0.4;
+const coachEarning = session.amount * (1 - COMMISSION); 
+
+    summary[coachId].total += coachEarning;
+    summary[coachId].sessions.push(session.id);
+  });
+
+  return Object.values(summary);
+} 
+
+async markAsPaid(sessionIds: number[]) {
+  await this.sessionRepository.update(
+    { id: In(sessionIds) },
+    {
+      paidOut: true,
+      paidOutAt: new Date(),
+    }
+  );
+
+  return { message: 'Payout marked as completed' };
 } 
 
 } 

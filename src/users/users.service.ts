@@ -73,6 +73,21 @@ async makeAdmin(username: string) {
   return { message: `${username} is now admin` };
 } 
 
+// bank payout related
+async updateBankDetails(userId: number, dto: any) {
+  const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  user.bankName = dto.bankName;
+  user.accountNumber = dto.accountNumber;
+  user.accountName = dto.accountName;
+
+  return this.usersRepository.save(user);
+} 
+
 
 }
 

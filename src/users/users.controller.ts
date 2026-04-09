@@ -3,6 +3,8 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
+import { UpdateBankDto } from './dto/update-bank.dto';
+
 
 @Controller('users')
 export class UsersController {
@@ -36,5 +38,14 @@ makeAdmin(@Param('username') username: string, @Req() req: any) {
   return this.usersService.makeAdmin(username);
 }
 
+// bank payout related 
+@UseGuards(AuthGuard('jwt'))
+@Patch('bank-details')
+updateBankDetails(
+  @Req() req,
+  @Body() dto: UpdateBankDto
+) {
+  return this.usersService.updateBankDetails(req.user.userId, dto);
+} 
 
 }

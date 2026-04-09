@@ -26,6 +26,9 @@ status: string; // pending | accepted | rejected | completed
 @Column({ default: 'unpaid' })
 paymentStatus: string; // unpaid | paid 
 
+@Column({ type: 'decimal', default: 0 })
+amount: number; 
+
 
 @Column({ type: 'text', nullable: true })
 meetingLink: string | null; 
@@ -37,5 +40,15 @@ meetingLink: string | null;
   @ManyToOne(() => Coach)
   @JoinColumn({ name: 'coachId' })
   coach: Coach;
+
+  // bank payout related
+  @Column({ default: false })
+isCompleted: boolean;
+
+@Column({ default: false })
+paidOut: boolean;
+
+@Column({ type: 'timestamp', nullable: true })
+paidOutAt: Date;
 
 } 

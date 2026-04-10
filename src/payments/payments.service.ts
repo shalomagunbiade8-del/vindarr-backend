@@ -55,24 +55,37 @@ export class PaymentsService {
 
   // Verify payment and mark session as paid
   async verify(reference: string, sessionId: number) {
-    try {
-      const response = await axios.get(
-        `https://api.paystack.co/transaction/verify/${reference}`,
-        {
-          headers: { Authorization: `Bearer ${this.PAYSTACK_SECRET}` },
-        }
-      );
-
-      const data = response.data;
-
-      if (data.data.status === 'success') {
-       await this.sessionsService.markSessionAsPaid(sessionId);
+  try {
+    const response = await axios.get(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${this.PAYSTACK_SECRET}`,
+        },
       }
+    );
 
-      return data;
-    } catch (error) {
-      console.error('Paystack verification error:', error.response?.data || error);
-      throw new Error('Payment verification failed');
+    const data = response.data;
+
+    if (data.data.status !== 'success') {
+      throw new Error('Payment not successful');
     }
+
+    // ✅ GET session to validate amount
+    const session = await this.sessionsService.findById(sessionId);
+
+    if (data.data.amount !== session.price * 100) {
+      throw new Error('Payment amount mismatch');
+    }
+
+    await this.sessionsService.markSessionAsPaid(sessionId);
+
+    return data;
+
+  } catch (error) {
+    console.error('Paystack verification error:', error.response?.data || error);
+    throw new Error('Payment verification failed');
   }
+} 
+
 }

@@ -19,10 +19,12 @@ export class SessionsService {
 
   async create(data: Partial<Session>) {
 
-    const session = this.sessionRepository.create({
-      ...data,
-      status: 'pending'
-    });
+  const session = this.sessionRepository.create({
+    ...data,
+    status: 'pending',
+    price: data.price || 0,
+    amount: data.price || 0 // ✅ IMPORTANT for payouts
+  }); 
 
     const saved = await this.sessionRepository.save(session);
 
@@ -149,7 +151,7 @@ async getCoachPayoutSummary() {
     }
 
     const COMMISSION = 0.4;
-const coachEarning = session.amount * (1 - COMMISSION); 
+const coachEarning = Number(session.amount) * (1 - COMMISSION); 
 
     summary[coachId].total += coachEarning;
     summary[coachId].sessions.push(session.id);
@@ -168,6 +170,18 @@ async markAsPaid(sessionIds: number[]) {
   );
 
   return { message: 'Payout marked as completed' };
+} 
+
+async findById(id: number) {
+  const session = await this.sessionRepository.findOne({
+    where: { id }
+  });
+
+  if (!session) {
+    throw new NotFoundException('Session not found');
+  }
+
+  return session;
 } 
 
 } 

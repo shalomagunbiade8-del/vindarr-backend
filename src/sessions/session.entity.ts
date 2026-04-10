@@ -29,6 +29,8 @@ paymentStatus: string; // unpaid | paid
 @Column({ type: 'decimal', default: 0 })
 amount: number; 
 
+@Column({ default: 0 })
+price: number;
 
 @Column({ type: 'text', nullable: true })
 meetingLink: string | null; 

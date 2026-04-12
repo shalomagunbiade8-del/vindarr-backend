@@ -160,4 +160,35 @@ async getVideosByCreator(creatorId: number){
   understandCount: video.understandCount,
 };
 }
+
+async searchVideos(query: string) {
+  if (!query) return [];
+
+  const videos = await this.videoRepository
+    .createQueryBuilder('video')
+    .leftJoinAndSelect('video.creator', 'creator')
+    .leftJoinAndSelect('video.comments', 'comments')
+    .where('LOWER(video.title) LIKE LOWER(:query)', { query: `%${query}%` })
+    .orWhere('LOWER(video.category) LIKE LOWER(:query)', { query: `%${query}%` })
+    .orWhere('LOWER(video.context) LIKE LOWER(:query)', { query: `%${query}%` })
+    .orderBy('video.createdAt', 'DESC')
+    .getMany();
+
+  return videos.map(v => ({
+    id: v.id,
+    title: v.title,
+    category: v.category,
+    context: v.context,
+    videoUrl: v.videoUrl,
+
+    understandCount: v.understandCount,
+
+    creatorId: v.creatorId,
+    creatorUsername: v.creator?.username || 'User',
+    creatorAvatar: v.creator?.avatar || null,
+
+    createdAt: v.createdAt,
+  }));
+} 
+
 }

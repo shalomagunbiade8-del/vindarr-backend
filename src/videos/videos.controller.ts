@@ -77,6 +77,11 @@ findAll(
   @Query('limit') limit: number = 10
 ) {
   return this.videosService.findAll(page, limit);
+}
+
+@Get('search')
+searchVideos(@Query('q') query: string) {
+  return this.videosService.searchVideos(query);
 } 
 
 @Get('/user/:creatorId')

@@ -15,22 +15,31 @@ export class MessagesService {
   ) {}
 
   async sendMessage(data: SendMessageDto) {
-    if (!data.senderUsername) throw new Error("senderUsername is required");
-    if (!data.receiverUsername) throw new Error("receiverUsername is required");
 
-    const msg: DeepPartial<Message> = {
-      senderUsername: data.senderUsername,
-      receiverUsername: data.receiverUsername,
-      text: data.text ?? undefined,
-      attachmentUrl: data.attachmentUrl ?? undefined,
-      attachmentType: data.attachmentType ?? undefined
-    };
-
-    const saved = await this.repo.save(msg);
-    this.gateway.sendMessage(saved);
-
-    return saved;
+  if (!data.senderUsername) {
+    throw new Error("senderUsername is required");
   }
+
+  // ✅ must be either private OR group
+  if (!data.receiverUsername && !data.roomId) {
+    throw new Error("Either receiverUsername or roomId is required");
+  }
+
+  const msg: DeepPartial<Message> = {
+    senderUsername: data.senderUsername,
+    receiverUsername: data.receiverUsername || undefined,
+roomId: data.roomId || undefined, 
+    text: data.text ?? undefined,
+    attachmentUrl: data.attachmentUrl ?? undefined,
+    attachmentType: data.attachmentType ?? undefined
+  };
+
+  const saved = await this.repo.save(msg);
+
+  this.gateway.sendMessage(saved);
+
+  return saved;
+} 
 
   async getConversation(user1: string, user2: string) {
     return this.repo
@@ -61,5 +70,12 @@ export class MessagesService {
       .orderBy("message.createdAt", "DESC")
       .getMany();
   }
+
+  async getRoomMessages(roomId: number) {
+  return this.repo.find({
+    where: { roomId },
+    order: { createdAt: 'ASC' }
+  });
+} 
 
 }

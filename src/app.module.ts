@@ -22,7 +22,7 @@ import { MessagesModule } from './messages/messages.module';
 import { PaymentsController } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 import { PaymentsModule } from './payments/payments.module';
-
+import { RoomsModule } from './rooms/rooms.module'; 
 
 
 
@@ -64,6 +64,7 @@ import { PaymentsModule } from './payments/payments.module';
     ResourcesModule,
     MessagesModule,
     PaymentsModule,
+    RoomsModule, 
   ],
   
 controllers: [

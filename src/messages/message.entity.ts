@@ -9,8 +9,13 @@ export class Message {
   @Column()
   senderUsername: string;
 
-  @Column()
+  // ✅ KEEP for 1–1 chat
+  @Column({ nullable: true })
   receiverUsername: string;
+
+  // ✅ ADD for group chat
+  @Column({ nullable: true })
+  roomId: number;
 
   @Column({ type:'text', nullable:true })
   text: string;
@@ -23,5 +28,4 @@ export class Message {
 
   @CreateDateColumn()
   createdAt: Date;
-
 } 

@@ -46,9 +46,16 @@ export class UsersService {
     .getOne();
     
   }
+
   async findAll() {
     return this.usersRepository.find();
   }
+
+  async getAllUsers(){
+  return this.usersRepository.find({
+    select: ['username', 'avatar']
+  });
+} 
 
   async findOneById(id: number) {
   return this.usersRepository.findOne({

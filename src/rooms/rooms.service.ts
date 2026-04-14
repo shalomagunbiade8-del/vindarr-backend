@@ -12,8 +12,14 @@ export class RoomsService {
   ) {}
 
   createRoom(data) {
-    return this.repo.save(data);
-  }
+  const room = this.repo.create({
+    name: data.name,
+    members: data.members || [],
+    description: data.description || ''
+  });
+
+  return this.repo.save(room);
+} 
 
   getRooms() {
     return this.repo.find();

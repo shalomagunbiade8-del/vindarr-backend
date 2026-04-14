@@ -11,4 +11,7 @@ export class ChatRoom {
 
   @Column("simple-array")
   members: string[]; // usernames
+
+  @Column({ nullable: true })
+description: string;
 } 

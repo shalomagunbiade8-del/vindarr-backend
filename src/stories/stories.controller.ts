@@ -73,4 +73,9 @@ toggleLike(@Param('id') id: number, @Req() req) {
   return this.storiesService.toggleLike(Number(id), req.user.userId);
 } 
 
+@Get('search')
+search(@Query('q') q: string) {
+  return this.storiesService.search(q);
+} 
+
 }

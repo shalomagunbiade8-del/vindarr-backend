@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Story } from './story.entity';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { User } from '../users/user.entity';
+import { ILike } from 'typeorm'; 
 
 @Injectable()
 export class StoriesService {
@@ -111,5 +112,19 @@ async toggleLike(storyId: number, userId: number) {
     likesCount: story.likedBy.length,
   };
 }
+
+async search(query: string) {
+
+  return this.storyRepository.find({
+    where: [
+      { title: ILike(`%${query}%`) },
+      { content: ILike(`%${query}%`) }
+    ],
+    relations: ['user'],
+    order: { createdAt: 'DESC' },
+    take: 20
+  });
+
+} 
 
 } 

@@ -127,4 +127,42 @@ async search(query: string) {
 
 } 
 
+async findOne(id: number) {
+  const story = await this.storyRepository.findOne({
+    where: { id },
+    relations: ['user']
+  });
+
+  if (!story) {
+    throw new NotFoundException('Story not found');
+  }
+
+  return {
+    id: story.id,
+    title: story.title,
+    content: story.content,
+    imageUrl: story.imageUrl,
+    avatar: story.avatar,
+    createdAt: story.createdAt,
+    username: story.user?.username || "User",
+    userId: story.userId,
+    likesCount: story.likedBy?.length || 0
+  };
+} 
+
+async update(id: number, dto: CreateStoryDto, userId: number){
+
+  const story = await this.storyRepository.findOne({ where: { id } });
+
+  if(!story) throw new NotFoundException();
+
+  if(story.userId !== userId){
+    throw new ForbiddenException();
+  }
+
+  Object.assign(story, dto);
+
+  return this.storyRepository.save(story);
+} 
+
 } 

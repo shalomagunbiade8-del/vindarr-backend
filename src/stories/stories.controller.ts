@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Delete, Param, UseGuards, Req, UseInterceptors, UploadedFile, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Delete, Param, UseGuards, Req, UseInterceptors, UploadedFile, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { StoriesService } from './stories.service';
 import { CreateStoryDto } from './dto/create-story.dto';
@@ -76,6 +76,21 @@ toggleLike(@Param('id') id: number, @Req() req) {
 @Get('search')
 search(@Query('q') q: string) {
   return this.storiesService.search(q);
+} 
+
+@Get(':id')
+getOne(@Param('id') id: number) {
+  return this.storiesService.findOne(Number(id));
+} 
+
+@UseGuards(AuthGuard('jwt'))
+@Patch(':id')
+update(
+  @Param('id') id: number,
+  @Body() dto: CreateStoryDto,
+  @Req() req
+) {
+  return this.storiesService.update(Number(id), dto, req.user.userId);
 } 
 
 }

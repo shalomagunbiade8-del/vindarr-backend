@@ -62,15 +62,34 @@ roomId: data.roomId || undefined,
   }
 
   async getInbox(username: string) {
-    return this.repo
-      .createQueryBuilder("message")
-      .where(
-        "message.senderUsername = :u OR message.receiverUsername = :u",
-        { u: username }
-      )
-      .orderBy("message.createdAt", "DESC")
-      .getMany();
-  }
+
+  const messages = await this.repo
+    .createQueryBuilder("message")
+    .where(
+      "message.senderUsername = :u OR message.receiverUsername = :u",
+      { u: username }
+    )
+    .orderBy("message.createdAt", "DESC")
+    .getMany();
+
+  const map = new Map();
+
+  messages.forEach(m => {
+
+    const otherUser =
+      m.senderUsername === username
+        ? m.receiverUsername
+        : m.senderUsername;
+
+    if (!otherUser) return;
+
+    if (!map.has(otherUser)) {
+      map.set(otherUser, m); // latest message
+    }
+  });
+
+  return Array.from(map.values());
+} 
 
   async getRoomMessages(roomId: number, username: string) {
 

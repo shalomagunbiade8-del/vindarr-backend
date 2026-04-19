@@ -25,14 +25,6 @@ export class MessagesGateway {
 
 } 
 
-  handleConnection(socket) {
-
-  socket.on("joinRoom", (roomId) => {
-    socket.join(`room_${roomId}`);
-  });
-
-} 
-
 @SubscribeMessage('joinRoom')
 handleJoinRoom(
   @ConnectedSocket() client: Socket,

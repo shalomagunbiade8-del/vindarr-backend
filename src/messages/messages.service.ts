@@ -4,6 +4,7 @@ import { Repository, DeepPartial } from 'typeorm';
 import { Message } from './message.entity';
 import { MessagesGateway } from './messages.gateway';
 import type { SendMessageDto } from './dto/send-message.dto'; // ✅ 'import type'
+import { ChatRoom } from '../rooms/chat-room.entity'; 
 
 @Injectable()
 export class MessagesService {
@@ -71,11 +72,22 @@ roomId: data.roomId || undefined,
       .getMany();
   }
 
-  async getRoomMessages(roomId: number) {
+  async getRoomMessages(roomId: number, username: string) {
+
+  const room = await this.repo.manager.findOne(ChatRoom, {
+    where: { id: roomId }
+  });
+
+  if (!room) throw new Error("Room not found");
+
+  if (!room.members.includes(username)) {
+    throw new Error("Access denied");
+  }
+
   return this.repo.find({
     where: { roomId },
     order: { createdAt: 'ASC' }
   });
-} 
+}
 
 }

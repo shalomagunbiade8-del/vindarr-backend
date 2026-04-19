@@ -43,9 +43,12 @@ export class MessagesController {
     return this.messagesService.getInbox(username);
   }
 
-  @Get('room/:roomId')
-getRoomMessages(@Param('roomId') roomId: number) {
-  return this.messagesService.getRoomMessages(roomId);
-}
+  @Get('room/:roomId/:username')
+getRoomMessages(
+  @Param('roomId') roomId: number,
+  @Param('username') username: string
+) {
+  return this.messagesService.getRoomMessages(roomId, username);
+} 
 
 }

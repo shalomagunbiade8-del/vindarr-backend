@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 
 @Controller('rooms')
@@ -14,5 +14,14 @@ export class RoomsController {
   @Get()
   getRooms() {
     return this.roomsService.getRooms();
+  }
+
+  // ✅ JOIN ROOM
+  @Post(':id/join')
+  joinRoom(
+    @Param('id') id: number,
+    @Body() body
+  ) {
+    return this.roomsService.joinRoom(id, body.username);
   }
 } 

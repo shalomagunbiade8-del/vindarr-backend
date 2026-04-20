@@ -30,7 +30,9 @@ handleJoinRoom(
   @ConnectedSocket() client: Socket,
   @MessageBody() roomId: number
 ){
-  client.join("room_" + roomId);
+  const room = "room_" + Number(roomId);
+client.join(room);
+console.log("JOINED:", room);
 } 
  
 

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
 import { RoomsService } from './rooms.service';
 
 @Controller('rooms')
@@ -24,4 +24,10 @@ export class RoomsController {
   ) {
     return this.roomsService.joinRoom(id, body.username);
   }
+
+  @Get('search')
+searchRooms(@Query('q') query: string) {
+  return this.roomsService.searchRooms(query);
+} 
+
 } 

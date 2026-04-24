@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Req, UseGuards, Patch, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Req, UseGuards, Patch, Param, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { AuthGuard } from '@nestjs/passport';
@@ -46,6 +46,11 @@ updateBankDetails(
 @Get()
 getAllUsers() {
   return this.usersService.getAllUsers();
+} 
+
+@Get('search')
+searchUsers(@Query('q') query: string) {
+  return this.usersService.searchUsers(query);
 } 
 
 }

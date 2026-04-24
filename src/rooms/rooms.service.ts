@@ -39,4 +39,15 @@ export class RoomsService {
   return room;
 } 
 
+async searchRooms(query: string) {
+  if (!query) return [];
+
+  return this.repo
+    .createQueryBuilder('room')
+    .where('LOWER(room.name) LIKE LOWER(:query)', {
+      query: `%${query}%`,
+    })
+    .getMany();
+} 
+
 } 

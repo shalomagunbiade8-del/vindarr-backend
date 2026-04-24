@@ -95,6 +95,18 @@ async updateBankDetails(userId: number, dto: any) {
   return this.usersRepository.save(user);
 } 
 
+async searchUsers(query: string) {
+  if (!query) return [];
+
+  return this.usersRepository
+    .createQueryBuilder('user')
+    .select(['user.username', 'user.avatar'])
+    .where('LOWER(user.username) LIKE LOWER(:query)', {
+      query: `%${query}%`,
+    })
+    .getMany();
+} 
+
 
 }
 

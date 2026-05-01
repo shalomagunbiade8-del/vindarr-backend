@@ -25,7 +25,7 @@ export class VideosService {
     private understandRepository: Repository<Understand>,
   ) {}
 
-  async create(dto: CreateVideoDto, userId: number) {
+  async create(dto: any, userId: number)  {
     const user = await this.userRepository.findOne({
       where: { id: userId },
     });
@@ -40,10 +40,10 @@ export class VideosService {
       creatorId: userId,
     });
 
-    const savedVideo = await this.videoRepository.save(video);
+    const savedVideo = await this.videoRepository.save(video as any);
 
 return this.videoRepository.findOne({
-  where: { id: savedVideo.id },
+  where: { id: (savedVideo as any).id },
   relations: ['creator'],
 }); 
 
@@ -88,7 +88,6 @@ async getVideosByCreator(creatorId: number){
   return videos;
 
 } 
-
 
   async deleteVideo(id: number, userId: number) {
     const video = await this.videoRepository.findOne({
@@ -188,6 +187,34 @@ async searchVideos(query: string) {
     creatorAvatar: v.creator?.avatar || null,
 
     createdAt: v.createdAt,
+  }));
+} 
+
+async getMarket(type: string) {
+
+  const query = this.videoRepository
+    .createQueryBuilder('item')
+    .leftJoinAndSelect('item.creator', 'creator')
+    .orderBy('item.createdAt', 'DESC');
+
+  if (type) {
+    query.andWhere('item.type = :type', { type });
+  }
+
+  const items = await query.getMany();
+
+  return items.map(item => ({
+    id: item.id,
+    title: item.title,
+    type: item.type,
+
+    videoUrl: item.videoUrl,
+    file: item.fileUrl,
+    coverUrl: item.coverUrl,
+
+    price: item.price,
+
+    username: item.creator?.username || 'User',
   }));
 } 
 

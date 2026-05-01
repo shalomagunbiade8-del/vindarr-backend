@@ -30,46 +30,76 @@ export class VideosController {
 
   @Post()
 @UseGuards(AuthGuard('jwt'))
-@UseInterceptors(
-  FileInterceptor('video', {
-    limits: { fileSize: 50 * 1024 * 1024 },
-  }),
-)
-async uploadVideo(
+@UseInterceptors(FileInterceptor('file'))
+async uploadContent(
   @UploadedFile() file: any,
-  @Body() body: CreateVideoDto,
+  @Body() body: any,
   @Req() req
 ) {
-  if (!file) {
-    throw new Error('Video file is required');
+  const { type } = body;
+
+  if (!type) {
+    throw new BadRequestException('Type is required');
   }
 
-  // Upload to Cloudinary manually
-  const uploadResult = await new Promise<any>((resolve, reject) => {
-    const stream = cloudinary.uploader.upload_stream(
-      {
-        resource_type: 'video',
-        folder: 'vindarr_videos',
-      },
-      (error, result) => {
-        if (error) return reject(error);
-        resolve(result);
-      },
-    );
+  let fileUrl: string | null = null;
+let coverUrl: string | null = null;
+let videoUrl: string | null = null; 
 
-    streamifier.createReadStream(file.buffer).pipe(stream);
-  });
+  // 🔥 HANDLE VIDEO
+  if (type === "video") {
+    if (!file) throw new BadRequestException("Video file required");
 
-  const videoUrl = uploadResult.secure_url;
+    const upload = await this.uploadToCloudinary(file, "video", "vindarr_videos");
+    videoUrl = upload;
+  }
+
+  // 🔥 HANDLE EBOOK
+  if (type === "ebook") {
+    if (!file) throw new BadRequestException("PDF required");
+
+    const upload = await this.uploadToCloudinary(file, "raw", "vindarr_ebooks");
+    fileUrl = upload;
+
+    // cover comes separately from frontend later
+    coverUrl = body.coverUrl;
+  }
+
+  // 🔥 HANDLE FASHION
+  if (type === "fashion") {
+    if (!file) throw new BadRequestException("Image/video required");
+
+    const upload = await this.uploadToCloudinary(file, "auto", "vindarr_fashion");
+    fileUrl = upload;
+  }
 
   return this.videosService.create(
     {
       ...body,
       videoUrl,
+      fileUrl,
+      coverUrl,
+      type,
+      price: body.price ? Number(body.price) : null,
     },
     req.user.userId,
   );
-}
+} 
+
+private async uploadToCloudinary(file, resource_type, folder) {
+  return new Promise<string>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { resource_type, folder },
+      (error, result) => {
+        if (error) return reject(error);
+        if (!result) return reject("Upload failed");
+resolve(result.secure_url); 
+      },
+    );
+
+    streamifier.createReadStream(file.buffer).pipe(stream);
+  });
+} 
 
   @Get()
 findAll(
@@ -91,6 +121,10 @@ getVideosByCreator(
   return this.videosService.getVideosByCreator(Number(creatorId));
 } 
 
+@Get('/market')
+async getMarket(@Query('type') type: string) {
+  return this.videosService.getMarket(type);
+} 
 
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')

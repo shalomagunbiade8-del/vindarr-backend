@@ -24,8 +24,20 @@ export class Video {
   @Column()
   context: string;
 
-  @Column()
-  videoUrl: string;
+  @Column({ nullable: true })
+videoUrl: string; 
+
+@Column({ default: 'video' })
+type: string; // "video" | "ebook" | "fashion"
+
+@Column({ nullable: true })
+fileUrl: string; // for fashion (image/video)
+
+@Column({ nullable: true })
+coverUrl: string; // for ebook cover
+
+@Column({ nullable: true })
+price: number; 
 
   @Column('int', { default: 0 })
   understandCount: number;

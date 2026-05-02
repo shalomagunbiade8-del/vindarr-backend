@@ -6,7 +6,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
 
-    "types": ["node", "multer"],
+    "types": ["node"],
 
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,

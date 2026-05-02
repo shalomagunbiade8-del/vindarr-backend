@@ -10,8 +10,10 @@ import {
   Req,
   UseInterceptors,
   UploadedFile,
+  UploadedFiles, // ✅ ADD THIS
   BadRequestException
 } from '@nestjs/common'; 
+
 
 import { AuthGuard } from '@nestjs/passport';
 
@@ -19,6 +21,8 @@ import { VideosService } from './videos.service';
 import { CreateVideoDto } from './dto/create-video.dto';
 
 import { FileInterceptor } from '@nestjs/platform-express';
+
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
  
 import { v2 as cloudinary } from 'cloudinary';
 import * as streamifier from 'streamifier'; 
@@ -30,13 +34,28 @@ export class VideosController {
 
   @Post()
 @UseGuards(AuthGuard('jwt'))
-@UseInterceptors(FileInterceptor('file'))
+@UseInterceptors(
+  FileFieldsInterceptor([
+    { name: 'file', maxCount: 1 },
+    { name: 'cover', maxCount: 1 },
+  ])
+) 
+
 async uploadContent(
-  @UploadedFile() file: any,
+  @UploadedFiles() files: {
+  file?: any[],
+  cover?: any[]
+},
+
   @Body() body: any,
   @Req() req
 ) {
   const { type } = body;
+
+  const file = files?.file?.[0];
+  const cover = files?.cover?.[0];
+
+  const coverFile = (req as any).files?.cover || null; 
 
   if (!type) {
     throw new BadRequestException('Type is required');
@@ -61,8 +80,10 @@ let videoUrl: string | null = null;
     const upload = await this.uploadToCloudinary(file, "raw", "vindarr_ebooks");
     fileUrl = upload;
 
-    // cover comes separately from frontend later
-    coverUrl = body.coverUrl;
+    if (cover) {
+  const coverUpload = await this.uploadToCloudinary(cover, "image", "vindarr_covers");
+  coverUrl = coverUpload;
+} 
   }
 
   // 🔥 HANDLE FASHION

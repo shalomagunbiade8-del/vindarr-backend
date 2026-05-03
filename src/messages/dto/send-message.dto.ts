@@ -1,13 +1,8 @@
+// send-message.dto.ts
+
 export interface SendMessageDto {
-  senderUsername: string;
-
-  // 1–1 chat
-  receiverUsername?: string;
-
-  // group chat
-  roomId?: number;
-
+  receiverUsername: string; // ✅ REQUIRED now
   text?: string;
   attachmentUrl?: string;
   attachmentType?: string;
-} 
+}

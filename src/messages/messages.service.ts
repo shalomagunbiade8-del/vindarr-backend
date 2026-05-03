@@ -4,7 +4,6 @@ import { Repository, DeepPartial } from 'typeorm';
 import { Message } from './message.entity';
 import { MessagesGateway } from './messages.gateway';
 import type { SendMessageDto } from './dto/send-message.dto'; // ✅ 'import type'
-import { ChatRoom } from '../rooms/chat-room.entity'; 
 
 @Injectable()
 export class MessagesService {
@@ -15,21 +14,15 @@ export class MessagesService {
     private gateway: MessagesGateway
   ) {}
 
-  async sendMessage(data: SendMessageDto) {
+  async sendMessage(data: SendMessageDto, currentUser: any) {
 
-  if (!data.senderUsername) {
-    throw new Error("senderUsername is required");
-  }
-
-  // ✅ must be either private OR group
-  if (!data.receiverUsername && !data.roomId) {
-    throw new Error("Either receiverUsername or roomId is required");
+  if (!data.receiverUsername) {
+    throw new Error("receiverUsername is required");
   }
 
   const msg: DeepPartial<Message> = {
-    senderUsername: data.senderUsername,
-    receiverUsername: data.receiverUsername || undefined,
-roomId: data.roomId || undefined, 
+    senderUsername: currentUser.username, // ✅ SECURE
+    receiverUsername: data.receiverUsername,
     text: data.text ?? undefined,
     attachmentUrl: data.attachmentUrl ?? undefined,
     attachmentType: data.attachmentType ?? undefined
@@ -40,7 +33,7 @@ roomId: data.roomId || undefined,
   this.gateway.sendMessage(saved);
 
   return saved;
-} 
+}
 
   async getConversation(user1: string, user2: string) {
     return this.repo
@@ -57,9 +50,18 @@ roomId: data.roomId || undefined,
       .getMany();
   }
 
-  async deleteMessage(id: number) {
-    return this.repo.delete(id);
+ async deleteMessage(id: number, currentUser: any) {
+
+  const msg = await this.repo.findOne({ where: { id } });
+
+  if (!msg) throw new Error("Message not found");
+
+  if (msg.senderUsername !== currentUser.username) {
+    throw new Error("Not allowed");
   }
+
+  return this.repo.delete(id);
+}
 
   async getInbox(username: string) {
 
@@ -90,23 +92,5 @@ roomId: data.roomId || undefined,
 
   return Array.from(map.values());
 } 
-
-  async getRoomMessages(roomId: number, username: string) {
-
-  const room = await this.repo.manager.findOne(ChatRoom, {
-    where: { id: roomId }
-  });
-
-  if (!room) throw new Error("Room not found");
-
-  if (!room.members.includes(username)) {
-    throw new Error("Access denied");
-  }
-
-  return this.repo.find({
-    where: { roomId },
-    order: { createdAt: 'ASC' }
-  });
-}
 
 }

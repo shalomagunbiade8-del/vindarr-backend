@@ -1,3 +1,5 @@
+// message.entity.ts
+
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
 @Entity()
@@ -9,13 +11,8 @@ export class Message {
   @Column()
   senderUsername: string;
 
-  // ✅ KEEP for 1–1 chat
-  @Column({ nullable: true })
+  @Column()
   receiverUsername: string;
-
-  // ✅ ADD for group chat
-  @Column({ nullable: true })
-  roomId: number;
 
   @Column({ type:'text', nullable:true })
   text: string;
@@ -28,4 +25,4 @@ export class Message {
 
   @CreateDateColumn()
   createdAt: Date;
-} 
+}

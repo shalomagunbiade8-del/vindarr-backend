@@ -15,25 +15,23 @@ export class MessagesGateway {
   @WebSocketServer()
   server: Server;
 
-  sendMessage(message:any){
+  sendMessage(message: any){
 
-  if (message.roomId) {
-    this.server.to("room_" + message.roomId).emit("receiveMessage", message);
-  } else {
-    this.server.emit("receiveMessage", message); // fallback for 1–1
+  // send ONLY to sender and receiver
+  this.server.to(message.receiverUsername).emit("receiveMessage", message);
+  this.server.to(message.senderUsername).emit("receiveMessage", message);
+
+}
+
+handleConnection(client: Socket) {
+
+  const username = client.handshake.auth?.username;
+
+  if (username) {
+    client.join(username); // 🔥 each user has their own room
+    console.log("User connected:", username);
   }
 
 } 
-
-@SubscribeMessage('joinRoom')
-handleJoinRoom(
-  @ConnectedSocket() client: Socket,
-  @MessageBody() roomId: number
-){
-  const room = "room_" + Number(roomId);
-client.join(room);
-console.log("JOINED:", room);
-} 
- 
 
 } 

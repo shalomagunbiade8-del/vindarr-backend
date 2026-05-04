@@ -1,6 +1,6 @@
 // send-message.dto.ts
 
-export interface SendMessageDto {
+export class SendMessageDto {
   receiverUsername: string; // ✅ REQUIRED now
   text?: string;
   attachmentUrl?: string;

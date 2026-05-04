@@ -1,7 +1,7 @@
 import { Controller, Post, Body, Get, Param, Delete, UseInterceptors, UploadedFile, Req, UseGuards} from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import type { SendMessageDto } from './dto/send-message.dto';
+import { SendMessageDto } from './dto/send-message.dto';
 import { AuthGuard } from '@nestjs/passport';
 
 @Controller('messages')

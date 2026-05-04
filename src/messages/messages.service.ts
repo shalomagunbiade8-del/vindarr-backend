@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeepPartial } from 'typeorm';
 import { Message } from './message.entity';
 import { MessagesGateway } from './messages.gateway';
-import type { SendMessageDto } from './dto/send-message.dto'; // ✅ 'import type'
+import { SendMessageDto } from './dto/send-message.dto';
 
 @Injectable()
 export class MessagesService {

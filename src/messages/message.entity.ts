@@ -1,5 +1,3 @@
-// message.entity.ts
-
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
 
 @Entity()
@@ -14,13 +12,13 @@ export class Message {
   @Column()
   receiverUsername: string;
 
-  @Column({ type:'text', nullable:true })
+  @Column({ type: 'text', nullable: true })
   text: string;
 
-  @Column({ nullable:true })
+  @Column({ nullable: true })
   attachmentUrl: string;
 
-  @Column({ nullable:true })
+  @Column({ nullable: true })
   attachmentType: string;
 
   @CreateDateColumn()

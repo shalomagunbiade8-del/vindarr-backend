@@ -2,15 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';  // ADD
 import axios from 'axios';
 import { SessionsService } from '../sessions/sessions.service';
+import { OrdersService } from '../orders/orders.service';
 
 @Injectable()
 export class PaymentsService {
   private PAYSTACK_SECRET: string;
 
   constructor(
-    private sessionsService: SessionsService,
-    private configService: ConfigService, // ADD
-  ) {
+  private sessionsService: SessionsService,
+  private ordersService: OrdersService,
+  private configService: ConfigService,
+)
+  
+  {
     this.PAYSTACK_SECRET = this.configService.get<string>('PAYSTACK_SECRET_KEY')!; // FIX 4
     console.log("PAYSTACK KEY LOADED:", this.PAYSTACK_SECRET); // TEMP DEBUG
   }
@@ -87,5 +91,65 @@ export class PaymentsService {
     throw new Error('Payment verification failed');
   }
 } 
+
+async initializeOrderPayment(
+  email: string,
+  amount: number,
+  orderId: number
+) {
+
+  const response = await axios.post(
+    'https://api.paystack.co/transaction/initialize',
+    {
+      email,
+      amount: amount * 100,
+      metadata: {
+        orderId
+      }
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${this.PAYSTACK_SECRET}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+
+  return response.data;
+}
+
+async verifyOrderPayment(
+  reference: string,
+  orderId: number
+) {
+
+  const response = await axios.get(
+    `https://api.paystack.co/transaction/verify/${reference}`,
+    {
+      headers: {
+        Authorization: `Bearer ${this.PAYSTACK_SECRET}`,
+      },
+    }
+  );
+
+  const data = response.data;
+
+  if(data.data.status !== 'success'){
+    throw new Error('Payment failed');
+  }
+
+  const order = await this.ordersService.findById(orderId);
+
+  if(data.data.amount !== order.amount * 100){
+    throw new Error('Amount mismatch');
+  }
+
+  await this.ordersService.markOrderAsPaid(
+    orderId,
+    reference
+  );
+
+  return data;
+}
 
 }

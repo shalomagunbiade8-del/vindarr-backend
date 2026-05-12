@@ -54,7 +54,7 @@ return this.videoRepository.findOne({
   const skip = (page - 1) * limit;
 
   const videos = await this.videoRepository.find({
-  relations: ['creator', 'comments'], // ✅ ADD THIS
+  relations: ['creator', 'comments', 'comments.author'], 
     order: { createdAt: 'DESC' },
     skip: skip,
     take: limit
@@ -77,6 +77,41 @@ return this.videoRepository.findOne({
   }));
 
 } 
+
+async findOne(id: number) {
+
+  const video = await this.videoRepository.findOne({
+    where: { id },
+    relations: ['creator', 'comments'],
+  });
+
+  if (!video) {
+    throw new NotFoundException('Content not found');
+  }
+
+  return {
+    id: video.id,
+    title: video.title,
+    category: video.category,
+    context: video.context,
+
+    type: video.type,
+
+    videoUrl: video.videoUrl,
+    file: video.fileUrl,
+    coverUrl: video.coverUrl,
+
+    price: video.price,
+
+    creatorId: video.creatorId,
+    creatorUsername: video.creator?.username,
+    creatorAvatar: video.creator?.avatar,
+
+    comments: video.comments,
+
+    createdAt: video.createdAt,
+  };
+}
 
 async getVideosByCreator(creatorId: number){
 

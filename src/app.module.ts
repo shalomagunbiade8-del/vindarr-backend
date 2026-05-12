@@ -22,6 +22,11 @@ import { MessagesModule } from './messages/messages.module';
 import { PaymentsController } from './payments/payments.controller';
 import { PaymentsService } from './payments/payments.service';
 import { PaymentsModule } from './payments/payments.module'; 
+import { OrdersModule } from './orders/orders.module';
+import { WalletsModule } from './wallets/wallets.module';
+import { LibraryModule } from './library/library.module';
+import { PayoutsModule } from './payouts/payouts.module';
+
 
 
 
@@ -63,6 +68,10 @@ import { PaymentsModule } from './payments/payments.module';
     ResourcesModule,
     MessagesModule,
     PaymentsModule,
+    OrdersModule,
+    WalletsModule,
+    LibraryModule,
+    PayoutsModule,
   ],
   
 controllers: [

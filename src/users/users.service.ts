@@ -22,16 +22,13 @@ export class UsersService {
       throw new BadRequestException('User already exists');
     }
 
-    // 2️⃣ HASH PASSWORD
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-
-    // 3️⃣ CREATE USER ENTITY
-    const user = this.usersRepository.create({
-      username: createUserDto.username,
-      email: createUserDto.email,
-      password: hashedPassword,
-      role: createUserDto.role ?? 'learner',
-    });
+    // 2️⃣ CREATE USER ENTITY
+const user = this.usersRepository.create({
+  username: createUserDto.username,
+  email: createUserDto.email,
+  password: createUserDto.password,
+  role: createUserDto.role ?? 'learner',
+});
 
     // 4️⃣ SAVE TO DB
     return this.usersRepository.save(user);
@@ -58,10 +55,42 @@ export class UsersService {
 } 
 
   async findOneById(id: number) {
+
   return this.usersRepository.findOne({
     where: { id },
+
+    select: [
+      'id',
+      'username',
+      'email',
+      'avatar',
+      'bio',
+      'role',
+      'totalUnderstand',
+      'bankName',
+      'accountNumber',
+      'accountName'
+    ]
   });
-} 
+
+}
+
+async findPublicById(id: number) {
+
+  return this.usersRepository.findOne({
+    where: { id },
+
+    select: [
+      'id',
+      'username',
+      'avatar',
+      'bio',
+      'role',
+      'totalUnderstand'
+    ]
+  });
+
+}
 
 // temporary
 async makeAdmin(username: string) {

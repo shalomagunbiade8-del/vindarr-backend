@@ -56,37 +56,51 @@ export class ProfileService {
   // PATCH /profile
   // =========================
   async updateProfile(
-    userId: number,
-    data: {
-      username?: string;
-      avatar?: string;
-      bio?: string;
-    },
-  ) {
-    const user = await this.userRepository.findOne({
+  userId: number,
+  data: {
+    username?: string;
+    avatar?: any;
+    bio?: string;
+  },
+) {
+
+  const user =
+    await this.userRepository.findOne({
       where: { id: userId },
     });
 
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    if (data.username !== undefined) {
-      user.username = data.username;
-    }
-
-    if (data.avatar !== undefined) {
-      user.avatar = data.avatar;
-    }
-
-    if (data.bio !== undefined) {
-      user.bio = data.bio;
-    }
-
-    const updatedUser = await this.userRepository.save(user);
-
-    const { password, ...safeUser } = updatedUser;
-
-    return safeUser;
+  if (!user) {
+    throw new NotFoundException(
+      'User not found',
+    );
   }
+
+  // USERNAME
+  if (data.username !== undefined) {
+    user.username = data.username;
+  }
+
+  // BIO
+  if (data.bio !== undefined) {
+    user.bio = data.bio;
+  }
+
+  // AVATAR
+  if (data.avatar) {
+
+    // TEMPORARY LOCAL PATH
+    user.avatar =
+      `/uploads/${data.avatar.filename}`;
+
+  }
+
+  const updatedUser =
+    await this.userRepository.save(user);
+
+  const { password, ...safeUser } =
+    updatedUser;
+
+  return safeUser;
+}
+
 }

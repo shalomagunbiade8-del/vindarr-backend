@@ -1,84 +1,101 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { ConfigModule } from '@nestjs/config';
+
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
 import { StoriesModule } from './stories/stories.module';
 import { VideosModule } from './videos/videos.module';
 import { ProfileModule } from './profile/profile.module';
-import { Understand } from './understand/understand.entity'; 
-import { Video } from './videos/video.entity';
-import { User } from './users/user.entity';
 import { CommentsModule } from './comments/comments.module';
-import { Comment } from './comments/comment.entity'; 
-import { CoachesModule } from './coaches/coaches.module';
-import { SessionsModule } from './sessions/sessions.module';
-import { ResourcesModule } from './resources/resources.module';
-import { Coach } from './coaches/coach.entity';
-import { Session } from './sessions/session.entity';
-import { Resource } from './resources/resource.entity';
-import { UploadController } from './upload/upload.controller';
+
 import { MessagesModule } from './messages/messages.module';
-import { PaymentsController } from './payments/payments.controller';
-import { PaymentsService } from './payments/payments.service';
-import { PaymentsModule } from './payments/payments.module'; 
+
+import { PaymentsModule } from './payments/payments.module';
 import { OrdersModule } from './orders/orders.module';
+
 import { WalletsModule } from './wallets/wallets.module';
 import { LibraryModule } from './library/library.module';
 import { PayoutsModule } from './payouts/payouts.module';
 
+import { UploadController } from './upload/upload.controller';
 
+import { User } from './users/user.entity';
+import { Video } from './videos/video.entity';
+import { Understand } from './understand/understand.entity';
+import { Comment } from './comments/comment.entity';
 
+import { Coach } from './coaches/coach.entity';
+import { Session } from './sessions/session.entity';
+import { Resource } from './resources/resource.entity';
+import { Order } from './orders/order.entity';
+
+import { Wallet } from './wallets/wallet.entity';
+
+import { Library } from './library/library.entity';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    TypeOrmModule.forRoot({
-  type: 'postgres',
+  ConfigModule.forRoot({
+    isGlobal: true,
+  }),
 
-  // Ensure env variable is read properly
-  url: process.env.DATABASE_URL,
+  TypeOrmModule.forRoot({
+    type: 'postgres',
 
-  autoLoadEntities: true,
+    url: process.env.DATABASE_URL,
 
-  entities: [User, Video, Understand, Comment, Coach, Session, Resource],
+    autoLoadEntities: true,
 
-  synchronize: true, // ok for now (later turn off in production)
+    entities: [
+      User,
+      Video,
+      Understand,
+      Comment,
+      Coach,
+      Session,
+      Resource,
+      Order,
+Wallet,
+Library,
+    ],
 
-  // ✅ FIX: Proper SSL handling for Render
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
+    synchronize: true,
 
-  // ✅ Extra stability (prevents crash loops)
-  retryAttempts: 5,
-  retryDelay: 3000,
-}),
+    ssl: {
+      rejectUnauthorized: false,
+    },
 
-    UsersModule,
-    AuthModule,
-    StoriesModule,
-    VideosModule,
-    ProfileModule,
-    CommentsModule,
-    CoachesModule,
-    SessionsModule,
-    ResourcesModule,
-    MessagesModule,
-    PaymentsModule,
-    OrdersModule,
-    WalletsModule,
-    LibraryModule,
-    PayoutsModule,
-  ],
-  
-controllers: [
-  UploadController
+    extra: {
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    },
+
+    retryAttempts: 5,
+    retryDelay: 3000,
+  }),
+
+  // ✅ KEEP ONLY THESE
+
+  UsersModule,
+  AuthModule,
+  ProfileModule,
+VideosModule,
+CommentsModule,
+OrdersModule,
+
+PaymentsModule,
+WalletsModule,
+PayoutsModule,
+LibraryModule,
 ],
-  
-providers: [PaymentsService],
 
+  // =====================================
+  // CONTROLLERS
+  // =====================================
+
+  controllers: [],
 })
 export class AppModule {}

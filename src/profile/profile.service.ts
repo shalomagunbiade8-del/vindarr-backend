@@ -28,9 +28,7 @@ export class ProfileService {
       throw new NotFoundException('User not found');
     }
 
-    const { password, ...safeUser } = user;
-
-    return safeUser;
+    return user;
   }
 
   // =========================
@@ -87,12 +85,8 @@ export class ProfileService {
 
   // AVATAR
   if (data.avatar) {
-
-    // TEMPORARY LOCAL PATH
-    user.avatar =
-      `/uploads/${data.avatar.filename}`;
-
-  }
+  user.avatar = data.avatar;
+}
 
   const updatedUser =
     await this.userRepository.save(user);

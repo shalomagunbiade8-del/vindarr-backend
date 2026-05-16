@@ -61,20 +61,29 @@ return this.videoRepository.findOne({
   });
 
   return videos.map(v => ({
-    id: v.id,
-    title: v.title,
-    category: v.category,
-    context: v.context,
-    videoUrl: v.videoUrl,
+  id: v.id,
+  title: v.title,
+  category: v.category,
+  context: v.context,
 
-    understandCount: v.understandCount,
+  type: v.type,
 
-    creatorId: v.creatorId,
-    creatorUsername: v.creator?.username || 'User',
-    creatorAvatar: v.creator?.avatar || null,
+  videoUrl: v.videoUrl,
+  file: v.fileUrl,
+  coverUrl: v.coverUrl,
 
-    createdAt: v.createdAt,
-  }));
+  price: v.price,
+
+  understandCount: v.understandCount,
+
+  creatorId: v.creatorId,
+  creatorUsername: v.creator?.username || 'User',
+  creatorAvatar: v.creator?.avatar || null,
+
+  comments: v.comments || [],
+
+  createdAt: v.createdAt,
+}));
 
 } 
 
@@ -82,7 +91,7 @@ async findOne(id: number) {
 
   const video = await this.videoRepository.findOne({
     where: { id },
-    relations: ['creator', 'comments'],
+    relations: ['creator', 'comments', 'comments.author'],
   });
 
   if (!video) {

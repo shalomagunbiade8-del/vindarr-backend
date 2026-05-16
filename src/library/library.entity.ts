@@ -2,18 +2,23 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
 } from 'typeorm';
 
 @Entity()
-export class Understand {
+
+export class Library {
 
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  videoId: number;
+  userId: number;
 
   @Column()
-  userId: number;
+  productId: number;
+
+  @CreateDateColumn()
+  createdAt: Date;
 
 }

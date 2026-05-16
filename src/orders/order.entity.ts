@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 
 import { User } from '../users/user.entity';
+import { CreateDateColumn } from 'typeorm';
 
 @Entity()
 export class Order {
@@ -52,6 +53,12 @@ export class Order {
 
   @Column({ default: false })
   downloaded: boolean;
+
+  @Column({ nullable: true })
+paymentMethod: string;
+
+@CreateDateColumn()
+createdAt: Date;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'buyerId' })

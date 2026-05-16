@@ -1,45 +1,75 @@
-import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+
+import { AuthGuard } from '@nestjs/passport';
+
 import { PaymentsService } from './payments.service';
 
 @Controller('payments')
+
 export class PaymentsController {
-  constructor(private paymentsService: PaymentsService) {}
 
-  @Post('initialize')
-  async initialize(@Body() body: { email: string; amount: number; sessionId: number }) {
-    return this.paymentsService.initialize(body.email, body.amount, body.sessionId);
+  constructor(
+    private paymentsService: PaymentsService,
+  ) {}
+
+  // =====================================
+  // INITIALIZE MARKET PAYMENT
+  // =====================================
+
+  @UseGuards(AuthGuard('jwt'))
+  @Post('market/initialize')
+
+  initializeMarketPayment(
+    @Body()
+    body: {
+      productId: number;
+    },
+
+    @Req() req,
+  ) {
+
+    return this.paymentsService
+      .initializeMarketPayment(
+
+        body.productId,
+
+        req.user.userId,
+
+      );
+
   }
 
-  @Get('verify')
-  async verify(@Query('reference') reference: string, @Query('sessionId') sessionId: number) {
-    return this.paymentsService.verify(reference, sessionId);
+  // =====================================
+  // VERIFY MARKET PAYMENT
+  // =====================================
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('market/verify')
+
+  verifyMarketPayment(
+
+    @Query('reference')
+    reference: string,
+
+    @Query('orderId')
+    orderId: number,
+
+  ) {
+
+    return this.paymentsService
+      .verifyMarketPayment(
+        reference,
+        Number(orderId),
+      );
+
   }
 
-  @Post('order/initialize')
-initializeOrder(
-  @Body()
-  body: {
-    email: string;
-    amount: number;
-    orderId: number;
-  }
-){
-  return this.paymentsService.initializeOrderPayment(
-    body.email,
-    body.amount,
-    body.orderId
-  );
 }
-
-@Get('order/verify')
-verifyOrder(
-  @Query('reference') reference: string,
-  @Query('orderId') orderId: number
-){
-  return this.paymentsService.verifyOrderPayment(
-    reference,
-    orderId
-  );
-}
-
-} 

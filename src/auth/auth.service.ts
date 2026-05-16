@@ -27,24 +27,39 @@ export class AuthService {
 
   // ✅ LOGIN
   async login(email: string, password: string) {
-    const user = await this.usersService.findByEmail(email);
+  const user = await this.usersService.findByEmail(email);
 
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    console.log('PASSWORD MATCH:', isPasswordValid);
-
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const payload = { sub: user.id, email: user.email, role: user.role };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+  if (!user) {
+    throw new UnauthorizedException('Invalid credentials');
   }
+
+  const isPasswordValid = await bcrypt.compare(
+    password,
+    user.password,
+  );
+
+  if (!isPasswordValid) {
+    throw new UnauthorizedException('Invalid credentials');
+  }
+
+  const payload = {
+    sub: user.id,
+    email: user.email,
+    role: user.role,
+  };
+
+  return {
+    access_token: this.jwtService.sign(payload),
+
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar,
+      bio: user.bio,
+    },
+  };
+}
+
 } 

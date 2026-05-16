@@ -1,155 +1,288 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';  // ADD
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+
+import { ConfigService } from '@nestjs/config';
+
 import axios from 'axios';
-import { SessionsService } from '../sessions/sessions.service';
+
 import { OrdersService } from '../orders/orders.service';
 
+import { VideosService } from '../videos/videos.service';
+
+import { UsersService } from '../users/users.service';
+
+import { WalletsService } from '../wallets/wallets.service';
+
+import { LibraryService } from '../library/library.service';
+
+
 @Injectable()
+
 export class PaymentsService {
+
   private PAYSTACK_SECRET: string;
 
   constructor(
-  private sessionsService: SessionsService,
-  private ordersService: OrdersService,
-  private configService: ConfigService,
-)
-  
-  {
-    this.PAYSTACK_SECRET = this.configService.get<string>('PAYSTACK_SECRET_KEY')!; // FIX 4
-    console.log("PAYSTACK KEY LOADED:", this.PAYSTACK_SECRET); // TEMP DEBUG
+
+    private ordersService: OrdersService,
+
+    private videosService: VideosService,
+
+    private usersService: UsersService,
+
+    private walletsService: WalletsService,
+
+    private libraryService: LibraryService,
+
+    private configService: ConfigService,
+
+  ) {
+
+    this.PAYSTACK_SECRET =
+      this.configService.get<string>(
+        'PAYSTACK_SECRET_KEY',
+      )!;
+
   }
 
-  // Initialize payment with session metadata
-  async initialize(email: string, amount: number, sessionId: number) {
-  if (!email) {
-    throw new Error("Email is required for payment");
-  }
+  async initializeMarketPayment(
+    productId: number,
+    buyerId: number,
+  ) {
 
-  try {
-    const response = await axios.post(
-      'https://api.paystack.co/transaction/initialize', // FIX 1: correct URL
-      {
-        email: email,          // FIX 2: proper object format
-        amount: amount * 100,  // amount in kobo
-        metadata: { sessionId } 
-      },
-      {
-        headers: {             // FIX 3: proper headers
-          Authorization: `Bearer ${this.PAYSTACK_SECRET}`,
-          'Content-Type': 'application/json',
+    const product =
+      await this.videosService.findOne(
+        productId,
+      );
+
+    if (!product) {
+      throw new NotFoundException(
+        'Product not found',
+      );
+    }
+
+    const buyer =
+      await this.usersService.findOneById(
+        buyerId,
+      );
+
+    if (!buyer) {
+      throw new NotFoundException(
+        'Buyer not found',
+      );
+    }
+
+    if (
+      product.creatorId === buyerId
+    ) {
+      throw new BadRequestException(
+        'You cannot buy your own product',
+      );
+    }
+
+    const order =
+      await this.ordersService.create(
+        productId,
+        buyerId,
+      );
+
+    const response =
+      await axios.post(
+
+        'https://api.paystack.co/transaction/initialize',
+
+        {
+
+          email: buyer.email,
+
+          amount:
+            Number(product.price) * 100,
+
+          metadata: {
+
+            orderId: order.id,
+
+            buyerId,
+
+            productId,
+
+            type: product.type,
+
+          },
+
         },
-        timeout: 15000, // VERY IMPORTANT
-      }
+
+        {
+
+          headers: {
+
+            Authorization:
+              `Bearer ${this.PAYSTACK_SECRET}`,
+
+            'Content-Type':
+              'application/json',
+
+          },
+
+        },
+
+      );
+
+    return {
+
+      checkoutUrl:
+        response.data.data.authorization_url,
+
+      reference:
+        response.data.data.reference,
+
+      orderId:
+        order.id,
+
+    };
+
+  }
+
+  async verifyMarketPayment(
+    reference: string,
+    orderId: number,
+  ) {
+
+    const response =
+      await axios.get(
+
+        `https://api.paystack.co/transaction/verify/${reference}`,
+
+        {
+
+          headers: {
+
+            Authorization:
+              `Bearer ${this.PAYSTACK_SECRET}`,
+
+          },
+
+        },
+
+      );
+
+    const data =
+      response.data;
+
+    if (
+      data.data.status !== 'success'
+    ) {
+
+      throw new BadRequestException(
+        'Payment failed',
+      );
+
+    }
+
+    const order =
+      await this.ordersService.findById(
+        orderId,
+      );
+
+    if (!order) {
+
+      throw new NotFoundException(
+        'Order not found',
+      );
+
+    }
+
+    if (
+      order.paymentStatus === 'paid'
+    ) {
+
+      return {
+        success: true,
+      };
+
+    }
+
+    if (
+      data.data.amount !==
+      Number(order.amount) * 100
+    ) {
+
+      throw new BadRequestException(
+        'Amount mismatch',
+      );
+
+    }
+
+    await this.ordersService
+      .markOrderAsPaid(
+        order.id,
+        reference,
+      );
+
+    const product =
+      await this.videosService.findOne(
+        order.productId,
+      );
+
+    // =====================================
+    // CREATOR SHARE
+    // =====================================
+
+    let creatorShare = 0;
+
+    if (product.type === 'ebook') {
+
+      creatorShare =
+        Number(product.price) * 0.6;
+
+    }
+
+    else if (
+      product.type === 'fashion'
+    ) {
+
+      creatorShare =
+        Number(product.price) * 0.7;
+
+    }
+
+    else {
+
+      creatorShare =
+        Number(product.price) * 0.7;
+
+    }
+
+    // CREDIT CREATOR
+    await this.walletsService.creditWallet(
+      product.creatorId,
+      creatorShare,
     );
 
-    return response.data;
+    // ADD TO LIBRARY
+    if (
+      product.type === 'ebook'
+    ) {
 
-  } catch (error) {
-    if (error.response) {
-      console.error("Paystack response error:", error.response.data);
-    } else if (error.request) {
-      console.error("Paystack no response:", error.request);
-    } else {
-      console.error("Paystack setup error:", error.message);
+      await this.libraryService.addToLibrary(
+        order.buyerId,
+        product.id,
+      );
+
     }
 
-    throw new Error('Payment initialization failed');
+    return {
+
+      success: true,
+
+      message:
+        'Payment verified',
+
+    };
+
   }
-} 
-
-  // Verify payment and mark session as paid
-  async verify(reference: string, sessionId: number) {
-  try {
-    const response = await axios.get(
-      `https://api.paystack.co/transaction/verify/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${this.PAYSTACK_SECRET}`,
-        },
-      }
-    );
-
-    const data = response.data;
-
-    if (data.data.status !== 'success') {
-      throw new Error('Payment not successful');
-    }
-
-    // ✅ GET session to validate amount
-    const session = await this.sessionsService.findById(sessionId);
-
-    if (data.data.amount !== session.price * 100) {
-      throw new Error('Payment amount mismatch');
-    }
-
-    await this.sessionsService.markSessionAsPaid(sessionId);
-
-    return data;
-
-  } catch (error) {
-    console.error('Paystack verification error:', error.response?.data || error);
-    throw new Error('Payment verification failed');
-  }
-} 
-
-async initializeOrderPayment(
-  email: string,
-  amount: number,
-  orderId: number
-) {
-
-  const response = await axios.post(
-    'https://api.paystack.co/transaction/initialize',
-    {
-      email,
-      amount: amount * 100,
-      metadata: {
-        orderId
-      }
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${this.PAYSTACK_SECRET}`,
-        'Content-Type': 'application/json',
-      },
-    }
-  );
-
-  return response.data;
-}
-
-async verifyOrderPayment(
-  reference: string,
-  orderId: number
-) {
-
-  const response = await axios.get(
-    `https://api.paystack.co/transaction/verify/${reference}`,
-    {
-      headers: {
-        Authorization: `Bearer ${this.PAYSTACK_SECRET}`,
-      },
-    }
-  );
-
-  const data = response.data;
-
-  if(data.data.status !== 'success'){
-    throw new Error('Payment failed');
-  }
-
-  const order = await this.ordersService.findById(orderId);
-
-  if(data.data.amount !== order.amount * 100){
-    throw new Error('Amount mismatch');
-  }
-
-  await this.ordersService.markOrderAsPaid(
-    orderId,
-    reference
-  );
-
-  return data;
-}
 
 }

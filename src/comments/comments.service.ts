@@ -41,7 +41,7 @@ export class CommentsService {
   const comment = new Comment();
 
   comment.text = dto.text;
-  comment.time = dto.time;
+  comment.time = dto.time || 0;
   comment.parentId = dto.parentId;
   comment.video = video;
   comment.author = author;

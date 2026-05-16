@@ -1,13 +1,47 @@
 import { Module } from '@nestjs/common';
+
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
+
 import { SessionsModule } from '../sessions/sessions.module';
 import { OrdersModule } from '../orders/orders.module';
 
+import { UsersModule } from '../users/users.module';
+import { VideosModule } from '../videos/videos.module';
+
+import { WalletsModule } from '../wallets/wallets.module';
+import { LibraryModule } from '../library/library.module';
+
 @Module({
-  imports: [SessionsModule, SessionsModule,
-  OrdersModule], // 🔥 IMPORTANT
-  providers: [PaymentsService],
-  controllers: [PaymentsController],
+
+  imports: [
+
+    SessionsModule,
+
+    OrdersModule,
+
+    UsersModule,
+
+    VideosModule,
+
+    WalletsModule,
+
+    LibraryModule,
+
+  ],
+
+  providers: [
+    PaymentsService,
+  ],
+
+  controllers: [
+    PaymentsController,
+  ],
+
+  exports: [
+    PaymentsService,
+  ],
+
 })
-export class PaymentsModule {} 
+
+export class PaymentsModule {}

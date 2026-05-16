@@ -5,15 +5,18 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Understand {
+export class Wallet {
 
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  videoId: number;
-
-  @Column()
+  @Column({ unique: true })
   userId: number;
+
+  @Column({
+    type: 'decimal',
+    default: 0,
+  })
+  balance: number;
 
 }

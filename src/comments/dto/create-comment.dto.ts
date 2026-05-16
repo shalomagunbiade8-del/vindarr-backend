@@ -1,6 +1,6 @@
 export class CreateCommentDto {
   videoId: number;
   text: string;
-  time: number;
+  time?: number;
   parentId?: number;
 }

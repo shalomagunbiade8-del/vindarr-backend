@@ -92,6 +92,14 @@ async findPublicById(id: number) {
 
 }
 
+async findById(id: number) {
+
+  return this.usersRepository.findOne({
+    where: { id },
+  });
+
+}
+
 // temporary
 async makeAdmin(username: string) {
   const user = await this.usersRepository.findOne({

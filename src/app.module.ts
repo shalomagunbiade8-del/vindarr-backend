@@ -34,6 +34,7 @@ import { Order } from './orders/order.entity';
 import { Wallet } from './wallets/wallet.entity';
 
 import { Library } from './library/library.entity';
+import { EarningsModule } from './earnings/earnings.module';
 
 @Module({
   imports: [
@@ -90,6 +91,7 @@ PaymentsModule,
 WalletsModule,
 PayoutsModule,
 LibraryModule,
+EarningsModule,
 ],
 
   // =====================================

@@ -187,6 +187,14 @@ export class PaymentsService {
         orderId,
       );
 
+      if (
+  data.data.metadata.orderId !== order.id
+) {
+  throw new BadRequestException(
+    'Invalid payment metadata',
+  );
+}
+
     if (!order) {
 
       throw new NotFoundException(
@@ -196,14 +204,15 @@ export class PaymentsService {
     }
 
     if (
-      order.paymentStatus === 'paid'
-    ) {
+  order.paymentStatus === 'paid'
+) {
 
-      return {
-        success: true,
-      };
+  return {
+    success: true,
+    message: 'Already verified',
+  };
 
-    }
+}
 
     if (
       data.data.amount !==

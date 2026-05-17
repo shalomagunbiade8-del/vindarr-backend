@@ -160,22 +160,29 @@ export class OrdersService {
   // =====================================
 
   async markOrderAsPaid(
-    orderId: number,
-    reference: string,
-  ) {
+  orderId: number,
+  reference: string,
+) {
 
-    const order =
-      await this.findById(orderId);
+  const order =
+    await this.findById(orderId);
 
-    order.paymentStatus = 'paid';
-
-    order.reference = reference;
-
-    return this.orderRepository.save(
-      order,
-    );
-
+  // prevent duplicate verification
+  if (order.paymentStatus === 'paid') {
+    return order;
   }
+
+  order.paymentStatus = 'paid';
+
+  order.reference = reference;
+
+  order.delivered = true;
+
+  return this.orderRepository.save(
+    order,
+  );
+
+}
 
   // =====================================
   // USER PURCHASES

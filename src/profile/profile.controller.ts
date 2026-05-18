@@ -12,6 +12,8 @@ import { AuthGuard } from '@nestjs/passport';
 
 import { ProfileService } from './profile.service';
 
+import { UpdateProfileDto } from './dto/update-profile.dto';
+
 
 @Controller('profile')
 export class ProfileController {
@@ -50,7 +52,7 @@ export class ProfileController {
 @Patch()
 updateProfile(
   @Req() req,
-  @Body() body,
+  @Body() body: UpdateProfileDto,
 ) {
   return this.profileService.updateProfile(
     req.user.userId,

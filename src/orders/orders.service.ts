@@ -79,17 +79,36 @@ export class OrdersService {
 
     }
 
-    // SPLIT
-    let platformPercent = 30;
+    // =====================================
+// PLATFORM SPLIT
+// =====================================
 
-    // EBOOK
-    if (
-      product.type === 'ebook'
-    ) {
+let platformPercent = 10;
 
-      platformPercent = 40;
+// EBOOKS → 40%
+if (
+  product.type === 'ebook'
+) {
 
-    }
+  platformPercent = 40;
+
+}
+
+// FASHION → 15%
+else if (
+  product.type === 'fashion'
+) {
+
+  platformPercent = 15;
+
+}
+
+// OTHERS → 10%
+else {
+
+  platformPercent = 10;
+
+}
 
     const amount =
       Number(product.price);

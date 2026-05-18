@@ -237,34 +237,11 @@ export class PaymentsService {
       );
 
     // =====================================
-    // CREATOR SHARE
-    // =====================================
+// CREATOR SHARE
+// =====================================
 
-    let creatorShare = 0;
-
-    if (product.type === 'ebook') {
-
-      creatorShare =
-        Number(product.price) * 0.6;
-
-    }
-
-    else if (
-      product.type === 'fashion'
-    ) {
-
-      creatorShare =
-        Number(product.price) * 0.7;
-
-    }
-
-    else {
-
-      creatorShare =
-        Number(product.price) * 0.7;
-
-    }
-
+const creatorShare =
+  Number(order.creatorAmount);
     // CREDIT CREATOR
     await this.walletsService.creditWallet(
       product.creatorId,

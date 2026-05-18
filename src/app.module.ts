@@ -35,6 +35,9 @@ import { Wallet } from './wallets/wallet.entity';
 
 import { Library } from './library/library.entity';
 import { EarningsModule } from './earnings/earnings.module';
+import { SearchModule } from './search/search.module';
+
+import { Story } from './stories/story.entity';
 
 @Module({
   imports: [
@@ -60,6 +63,7 @@ import { EarningsModule } from './earnings/earnings.module';
       Order,
 Wallet,
 Library,
+Story,
     ],
 
     synchronize: true,
@@ -80,24 +84,34 @@ Library,
 
   // ✅ KEEP ONLY THESE
 
-  UsersModule,
-  AuthModule,
-  ProfileModule,
+  // =====================================
+// APP MODULES
+// =====================================
+
+UsersModule,
+AuthModule,
+ProfileModule,
+
 VideosModule,
 CommentsModule,
-OrdersModule,
 
+StoriesModule,
+MessagesModule,
+
+OrdersModule,
 PaymentsModule,
+
 WalletsModule,
 PayoutsModule,
 LibraryModule,
 EarningsModule,
+SearchModule,
 ],
 
   // =====================================
   // CONTROLLERS
   // =====================================
 
-  controllers: [],
+  controllers: [UploadController],
 })
 export class AppModule {}

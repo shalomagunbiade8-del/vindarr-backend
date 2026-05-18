@@ -13,8 +13,8 @@ export class Story {
   @Column()
   content: string;
 
-  @Column()
-  avatar: string;
+  @Column({ nullable: true })
+avatar: string;
 
   @Column({ nullable: true })
   imageUrl?: string;

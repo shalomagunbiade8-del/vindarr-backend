@@ -1,4 +1,16 @@
-import { Controller, Post, Body, Get, Param, Delete, UseInterceptors, UploadedFile, Req, UseGuards} from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Delete,
+  UseInterceptors,
+  UploadedFile,
+  Req,
+  UseGuards
+} from '@nestjs/common';
+
 import { MessagesService } from './messages.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { SendMessageDto } from './dto/send-message.dto';
@@ -10,7 +22,7 @@ export class MessagesController {
   constructor(private messagesService: MessagesService) {}
 
  @Post()
-@UseGuards(AuthGuard) // ✅ add your auth guard
+@UseGuards(AuthGuard('jwt')) // ✅ add your auth guard
 sendMessage(@Req() req, @Body() body: SendMessageDto) {
   return this.messagesService.sendMessage(body, req.user);
 }
@@ -24,7 +36,7 @@ sendMessage(@Req() req, @Body() body: SendMessageDto) {
   }
 
   @Delete(':id')
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard('jwt'))
 deleteMessage(@Param('id') id: number, @Req() req) {
   return this.messagesService.deleteMessage(Number(id), req.user);
 }
@@ -53,9 +65,28 @@ deleteMessage(@Param('id') id: number, @Req() req) {
     };
   }
 
-  @Get('inbox/:username')
-  getInbox(@Param('username') username: string) {
-    return this.messagesService.getInbox(username);
-  }
+  @UseGuards(AuthGuard('jwt'))
+@Get('inbox')
+getInbox(@Req() req) {
+
+  return this.messagesService.getInbox(
+    req.user.username
+  );
+
+}
+
+@UseGuards(AuthGuard('jwt'))
+@Get(':username')
+getChat(
+  @Param('username') username: string,
+  @Req() req
+) {
+
+  return this.messagesService.getConversation(
+    req.user.username,
+    username
+  );
+
+}
 
 }

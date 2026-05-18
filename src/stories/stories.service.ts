@@ -23,6 +23,10 @@ export class StoriesService {
     where: { id: userId }
   });
 
+  if (!dto.title || !dto.content) {
+  throw new Error('Title and content required');
+}
+
   const story = this.storyRepository.create({
     title: dto.title,
     content: dto.content,
@@ -41,7 +45,10 @@ export class StoriesService {
 
   const [stories, total] = await this.storyRepository.findAndCount({
     relations: ['user'],
-    order: { createdAt: 'DESC' },
+    order: {
+  createdAt: 'DESC',
+  id: 'DESC',
+},
     skip: (page - 1) * limit,
     take: limit,
   });
@@ -115,7 +122,7 @@ async toggleLike(storyId: number, userId: number) {
 
 async search(query: string) {
 
-  return this.storyRepository.find({
+  const stories = await this.storyRepository.find({
     where: [
       { title: ILike(`%${query}%`) },
       { content: ILike(`%${query}%`) }
@@ -125,7 +132,18 @@ async search(query: string) {
     take: 20
   });
 
-} 
+  return stories.map(story => ({
+    id: story.id,
+    title: story.title,
+    content: story.content,
+    imageUrl: story.imageUrl,
+    avatar: story.avatar,
+    username: story.user?.username || 'User',
+    createdAt: story.createdAt,
+    likesCount: story.likedBy?.length || 0
+  }));
+
+}
 
 async findOne(id: number) {
   const story = await this.storyRepository.findOne({

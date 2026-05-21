@@ -76,7 +76,7 @@ getInbox(@Req() req) {
 }
 
 @UseGuards(AuthGuard('jwt'))
-@Get(':username')
+@Get('chat/:username')
 getChat(
   @Param('username') username: string,
   @Req() req

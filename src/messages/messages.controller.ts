@@ -27,6 +27,20 @@ sendMessage(@Req() req, @Body() body: SendMessageDto) {
   return this.messagesService.sendMessage(body, req.user);
 }
 
+@UseGuards(AuthGuard('jwt'))
+@Get('chat/:username')
+getChat(
+  @Param('username') username: string,
+  @Req() req
+) {
+
+  return this.messagesService.getConversation(
+    req.user.username,
+    username
+  );
+
+}
+
   @Get('conversation/:user1/:user2')
   getConversation(
     @Param('user1') user1: string,
@@ -71,20 +85,6 @@ getInbox(@Req() req) {
 
   return this.messagesService.getInbox(
     req.user.username
-  );
-
-}
-
-@UseGuards(AuthGuard('jwt'))
-@Get('chat/:username')
-getChat(
-  @Param('username') username: string,
-  @Req() req
-) {
-
-  return this.messagesService.getConversation(
-    req.user.username,
-    username
   );
 
 }

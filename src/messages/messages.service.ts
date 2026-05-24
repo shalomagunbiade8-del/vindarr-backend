@@ -16,19 +16,25 @@ export class MessagesService {
 
   async sendMessage(data: SendMessageDto, currentUser: any) {
 
+  console.log("CURRENT USER:", currentUser);
+
   if (!data.receiverUsername) {
     throw new Error("receiverUsername is required");
   }
 
   const msg: DeepPartial<Message> = {
-    senderUsername: currentUser.username, // ✅ SECURE
+    senderUsername: currentUser.username,
     receiverUsername: data.receiverUsername,
     text: data.text ?? undefined,
     attachmentUrl: data.attachmentUrl ?? undefined,
     attachmentType: data.attachmentType ?? undefined
   };
 
+  console.log("MESSAGE TO SAVE:", msg);
+
   const saved = await this.repo.save(msg);
+
+  console.log("SAVED:", saved);
 
   this.gateway.sendMessage(saved);
 

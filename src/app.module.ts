@@ -33,6 +33,8 @@ import { Order } from './orders/order.entity';
 
 import { Wallet } from './wallets/wallet.entity';
 
+import { Message } from './messages/message.entity';
+
 import { Library } from './library/library.entity';
 import { EarningsModule } from './earnings/earnings.module';
 import { SearchModule } from './search/search.module';
@@ -64,6 +66,7 @@ import { Story } from './stories/story.entity';
 Wallet,
 Library,
 Story,
+Message,
     ],
 
     synchronize: true,

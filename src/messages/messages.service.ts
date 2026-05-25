@@ -14,48 +14,41 @@ export class MessagesService {
     private gateway: MessagesGateway
   ) {}
 
- async sendMessage(data: SendMessageDto, currentUser: any) {
+ async sendMessage(data: any, currentUser: any) {
 
-  try {
+  console.log("CURRENT USER:", currentUser);
 
-    console.log("CURRENT USER:", currentUser);
-    console.log("BODY:", data);
+  console.log("BODY:", data);
 
-    if (!currentUser) {
-      throw new Error("No current user");
-    }
-
-    if (!currentUser.username) {
-      throw new Error("JWT username missing");
-    }
-
-    if (!data.receiverUsername) {
-      throw new Error("receiverUsername missing");
-    }
-
-    const msg: DeepPartial<Message> = {
-  senderUsername: currentUser.username,
-  receiverUsername: data.receiverUsername,
-  text: data.text || undefined,
-  attachmentUrl: data.attachmentUrl || undefined,
-  attachmentType: data.attachmentType || undefined,
-};
-    console.log("MESSAGE OBJECT:", msg);
-
-    const saved = await this.repo.save(msg);
-
-    console.log("MESSAGE SAVED:", saved);
-
-    this.gateway.sendMessage(saved);
-
-    return saved;
-
-  } catch (err) {
-
-    console.log("SEND MESSAGE ERROR:", err);
-
-    throw err;
+  if (!data.receiverUsername) {
+    throw new Error("receiverUsername missing");
   }
+
+  const msg: DeepPartial<Message> = {
+
+    senderUsername: currentUser.username,
+
+    receiverUsername: data.receiverUsername,
+
+    text: data.text || undefined,
+
+    attachmentUrl:
+      data.attachmentUrl || undefined,
+
+    attachmentType:
+      data.attachmentType || undefined,
+  };
+
+  console.log("MESSAGE:", msg);
+
+  const saved =
+  await this.repo.save(msg);
+
+  console.log("SAVED:", saved);
+
+  this.gateway.sendMessage(saved);
+
+  return saved;
 }
 
   async getConversation(user1: string, user2: string) {

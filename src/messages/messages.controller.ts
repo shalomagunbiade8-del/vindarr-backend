@@ -22,8 +22,11 @@ export class MessagesController {
   constructor(private messagesService: MessagesService) {}
 
  @Post()
-@UseGuards(AuthGuard('jwt')) // ✅ add your auth guard
-sendMessage(@Req() req, @Body() body: SendMessageDto) {
+@UseGuards(AuthGuard('jwt'))
+sendMessage(
+  @Req() req,
+  @Body() body: any
+) {
 
   console.log("REQ USER:", req.user);
 

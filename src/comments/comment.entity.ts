@@ -1,6 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+} from 'typeorm';
+
 import { User } from '../users/user.entity';
 import { Video } from '../videos/video.entity';
+import { Story } from '../stories/story.entity';
 
 @Entity()
 export class Comment {
@@ -11,16 +18,47 @@ export class Comment {
   @Column()
   text: string;
 
-  @Column()
+  @Column({ default: 0 })
   time: number;
 
   @Column({ nullable: true })
   parentId?: number;
 
-  @ManyToOne(() => User, user => user.comments)
+  // =========================
+  // AUTHOR
+  // =========================
+
+  @ManyToOne(
+    () => User,
+    user => user.comments,
+  )
   author: User;
 
-  @ManyToOne(() => Video, video => video.comments)
-  video: Video;
+  // =========================
+  // VIDEO COMMENT
+  // =========================
 
-} 
+  @ManyToOne(
+    () => Video,
+    video => video.comments,
+    {
+      nullable: true,
+      onDelete: 'CASCADE',
+    },
+  )
+  video?: Video;
+
+  // =========================
+  // STORY COMMENT
+  // =========================
+
+  @ManyToOne(
+    () => Story,
+    {
+      nullable: true,
+      onDelete: 'CASCADE',
+    },
+  )
+  story?: Story;
+
+}

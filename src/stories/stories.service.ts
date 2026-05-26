@@ -5,6 +5,8 @@ import { Story } from './story.entity';
 import { CreateStoryDto } from './dto/create-story.dto';
 import { User } from '../users/user.entity';
 import { ILike } from 'typeorm'; 
+import { StoryComment } from './story-comment.entity';
+
 
 @Injectable()
 export class StoriesService {
@@ -15,6 +17,9 @@ export class StoriesService {
 
   @InjectRepository(User)
   private userRepository: Repository<User>,
+
+  @InjectRepository(StoryComment)
+private commentRepository: Repository<StoryComment>,
 ) {} 
 
   async create(dto: CreateStoryDto, userId: number) {
@@ -182,5 +187,56 @@ async update(id: number, dto: CreateStoryDto, userId: number){
 
   return this.storyRepository.save(story);
 } 
+
+async addComment(
+  storyId: number,
+  content: string,
+  userId: number,
+) {
+
+  const story = await this.storyRepository.findOne({
+    where: { id: storyId },
+  });
+
+  if (!story) {
+    throw new NotFoundException('Story not found');
+  }
+
+  const user = await this.userRepository.findOne({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  const comment =
+    this.commentRepository.create({
+      content,
+      story,
+      user,
+    });
+
+  return this.commentRepository.save(comment);
+
+}
+
+async getComments(storyId: number){
+
+  return this.commentRepository.find({
+    where: {
+  story: {
+    id: storyId,
+  },
+},
+
+    relations: ['user'],
+
+    order: {
+      createdAt: 'DESC'
+    }
+  });
+
+}
 
 } 

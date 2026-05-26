@@ -1,5 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
+
 import { User } from '../users/user.entity';
+import { StoryComment } from './story-comment.entity';
 
 @Entity()
 export class Story {
@@ -10,26 +20,34 @@ export class Story {
   @Column()
   title: string;
 
-  @Column()
+  @Column('text')
   content: string;
 
   @Column({ nullable: true })
-avatar: string;
+  imageUrl: string;
 
   @Column({ nullable: true })
-  imageUrl?: string;
+  avatar: string;
 
-  @Column({ nullable: true })
+  @Column()
   userId: number;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @Column('int', { array: true, default: [] })
+  @OneToMany(
+    () => StoryComment,
+    comment => comment.story
+  )
+  comments: StoryComment[];
+
+  @Column('int', {
+    array: true,
+    default: []
+  })
   likedBy: number[];
 
   @CreateDateColumn()
   createdAt: Date;
-
 }

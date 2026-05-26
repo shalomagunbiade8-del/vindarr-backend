@@ -17,11 +17,16 @@ export class Story {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  title: string;
+  @Column({
+  nullable: true,
+})
+title: string;
 
-  @Column('text')
-  content: string;
+  @Column({
+  type: 'text',
+  nullable: true,
+})
+content: string;
 
   @Column({ nullable: true })
   imageUrl: string;

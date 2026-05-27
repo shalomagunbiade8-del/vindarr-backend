@@ -1,6 +1,22 @@
+import {
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
 export class CreateStoryDto {
+
+  @IsString()
   title: string;
+
+  @IsString()
   content: string;
+
+  @IsOptional()
+  @IsString()
   imageUrl?: string;
-  avatar?: string; // ✅ ADD THIS
+
+  @IsOptional()
+  @IsString()
+  avatar?: string;
+
 }

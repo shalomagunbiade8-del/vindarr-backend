@@ -172,6 +172,41 @@ export class StoriesController {
   }
 
   // =====================================
+// ADD COMMENT
+// =====================================
+
+@UseGuards(AuthGuard('jwt'))
+@Post(':id/comments')
+addComment(
+  @Param('id') id: number,
+  @Body() body: { content: string },
+  @Req() req,
+) {
+
+  return this.storiesService.addComment(
+    Number(id),
+    body.content,
+    req.user.userId,
+  );
+
+}
+
+// =====================================
+// GET COMMENTS
+// =====================================
+
+@Get(':id/comments')
+getComments(
+  @Param('id') id: number,
+) {
+
+  return this.storiesService.getComments(
+    Number(id),
+  );
+
+}
+
+  // =====================================
   // GET ONE STORY
   // =====================================
 
@@ -205,32 +240,5 @@ export class StoriesController {
     );
 
   }
-
-  @Post(':id/comments')
-@UseGuards(AuthGuard('jwt'))
-addComment(
-  @Param('id') id: number,
-  @Body() body: any,
-  @Req() req
-){
-
-  return this.storiesService.addComment(
-    Number(id),
-    body.content,
-    req.user.userId
-  );
-
-}
-
-@Get(':id/comments')
-getComments(
-  @Param('id') id: number
-){
-
-  return this.storiesService.getComments(
-    Number(id)
-  );
-
-}
 
 }

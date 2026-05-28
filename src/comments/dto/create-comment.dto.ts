@@ -1,15 +1,28 @@
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+} from 'class-validator';
+
 export class CreateCommentDto {
 
+  @IsString()
   text: string;
 
+  @IsOptional()
+  @IsNumber()
   time?: number;
 
+  @IsOptional()
+  @IsNumber()
   parentId?: number;
 
-  // OPTIONAL VIDEO
+  @IsOptional()
+  @IsNumber()
   videoId?: number;
 
-  // OPTIONAL STORY
+  @IsOptional()
+  @IsNumber()
   storyId?: number;
 
 }

@@ -42,107 +42,100 @@ export class CommentsService {
   // =====================================
 
   async create(
-    dto: CreateCommentDto,
-    user: any,
-  ) {
+  dto: CreateCommentDto,
+  user: any,
+) {
 
-    const author =
-      await this.userRepository.findOne({
-        where: {
-          id: user.userId,
-        },
-      });
+  console.log('DTO RECEIVED:', dto);
 
-    if (!author) {
-      throw new NotFoundException(
-        'User not found',
-      );
-    }
+  const author =
+    await this.userRepository.findOne({
+      where: {
+        id: user.userId,
+      },
+    });
 
-    // MUST HAVE STORY OR VIDEO
-    if (!dto.videoId && !dto.storyId) {
+  if (!author) {
 
-      throw new BadRequestException(
-        'videoId or storyId required',
-      );
-
-    }
-
-    const comment = new Comment();
-
-    comment.text = dto.text;
-
-    console.log(dto);
-
-    const saved =
-await this.commentRepository.save(
-  comment,
-);
-
-console.log(saved);
-
-return saved;
-
-    comment.time = dto.time || 0;
-
-    comment.parentId = dto.parentId;
-
-    comment.author = author!;
-
-    // =====================================
-    // VIDEO COMMENT
-    // =====================================
-
-    if (dto.videoId) {
-
-      const video =
-        await this.videoRepository.findOne({
-          where: {
-            id: dto.videoId,
-          },
-        });
-
-      if (!video) {
-
-        throw new NotFoundException(
-          'Video not found',
-        );
-
-      }
-
-      comment.video = video!;
-
-    }
-
-    // =====================================
-    // STORY COMMENT
-    // =====================================
-
-    if (dto.storyId) {
-
-      const story =
-        await this.storyRepository.findOne({
-          where: {
-            id: dto.storyId,
-          },
-        });
-
-      if (!story) {
-
-        throw new NotFoundException(
-          'Story not found',
-        );
-
-      }
-
-      comment.story = story!;
-    }
-
-    return this.commentRepository.save(
-      comment,
+    throw new NotFoundException(
+      'User not found',
     );
 
   }
+
+  if (!dto.videoId && !dto.storyId) {
+
+    throw new BadRequestException(
+      'videoId or storyId required',
+    );
+
+  }
+
+  const comment = new Comment();
+
+  comment.text = dto.text;
+
+  comment.time = dto.time || 0;
+
+  comment.parentId = dto.parentId;
+
+  comment.author = author;
+
+  // =========================
+  // VIDEO
+  // =========================
+
+  if (dto.videoId) {
+
+    const video =
+      await this.videoRepository.findOne({
+        where: {
+          id: dto.videoId,
+        },
+      });
+
+    if (!video) {
+
+      throw new NotFoundException(
+        'Video not found',
+      );
+
+    }
+
+    comment.video = video;
+
+  }
+
+  // =========================
+  // STORY
+  // =========================
+
+  if (dto.storyId) {
+
+    const story =
+      await this.storyRepository.findOne({
+        where: {
+          id: dto.storyId,
+        },
+      });
+
+    if (!story) {
+
+      throw new NotFoundException(
+        'Story not found',
+      );
+
+    }
+
+    comment.story = story;
+
+  }
+
+  return this.commentRepository.save(
+    comment,
+  );
+
+}
 
   // =====================================
   // VIDEO COMMENTS

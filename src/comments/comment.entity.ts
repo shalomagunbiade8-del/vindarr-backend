@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  CreateDateColumn,
 } from 'typeorm';
 
 import { User } from '../users/user.entity';
@@ -60,5 +61,8 @@ export class Comment {
     },
   )
   story?: Story;
+
+  @CreateDateColumn()
+createdAt: Date;
 
 }

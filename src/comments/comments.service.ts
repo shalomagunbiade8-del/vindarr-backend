@@ -72,11 +72,22 @@ export class CommentsService {
 
     comment.text = dto.text;
 
+    console.log(dto);
+
+    const saved =
+await this.commentRepository.save(
+  comment,
+);
+
+console.log(saved);
+
+return saved;
+
     comment.time = dto.time || 0;
 
     comment.parentId = dto.parentId;
 
-    comment.author = author;
+    comment.author = author!;
 
     // =====================================
     // VIDEO COMMENT
@@ -99,7 +110,7 @@ export class CommentsService {
 
       }
 
-      comment.video = video;
+      comment.video = video!;
 
     }
 
@@ -124,8 +135,7 @@ export class CommentsService {
 
       }
 
-      comment.story = story;
-
+      comment.story = story!;
     }
 
     return this.commentRepository.save(

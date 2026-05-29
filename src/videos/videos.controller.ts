@@ -22,6 +22,8 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import * as streamifier from 'streamifier';
 
+import { memoryStorage } from 'multer';
+
 @Controller('videos')
 export class VideosController {
   constructor(
@@ -41,6 +43,8 @@ export class VideosController {
       { name: 'cover', maxCount: 1 },
     ],
     {
+      storage: memoryStorage(),
+
       limits: {
         fileSize: 1024 * 1024 * 200,
       },
@@ -158,39 +162,57 @@ export class VideosController {
   // =====================================
 
   private async uploadToCloudinary(
-    file,
-    resource_type,
-    folder,
-  ) {
-    return new Promise<string>(
-      (resolve, reject) => {
-        const stream =
-          cloudinary.uploader.upload_stream(
-            {
-              resource_type,
-              folder,
-            },
-            (error, result) => {
-              if (error) {
-                return reject(error);
-              }
+  file,
+  resource_type,
+  folder,
+) {
+  return new Promise<string>(
+    (resolve, reject) => {
 
-              if (!result) {
-                return reject(
-                  'Upload failed',
-                );
-              }
+      if (!file || !file.buffer) {
 
-              resolve(result.secure_url);
-            },
-          );
+        console.log('INVALID FILE:', file);
 
-        streamifier
-          .createReadStream(file.buffer)
-          .pipe(stream);
-      },
-    );
-  }
+        return reject(
+          'File buffer missing',
+        );
+      }
+
+      const stream =
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type,
+            folder,
+          },
+          (error, result) => {
+
+            if (error) {
+
+              console.log(
+                'CLOUDINARY ERROR:',
+                error,
+              );
+
+              return reject(error);
+            }
+
+            if (!result) {
+
+              return reject(
+                'Upload failed',
+              );
+            }
+
+            resolve(result.secure_url);
+          },
+        );
+
+      streamifier
+        .createReadStream(file.buffer)
+        .pipe(stream);
+    },
+  );
+}
 
   // =====================================
   // GET ALL VIDEOS

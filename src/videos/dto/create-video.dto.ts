@@ -1,4 +1,5 @@
 export class CreateVideoDto {
+
   title: string;
 
   category: string;
@@ -14,4 +15,5 @@ export class CreateVideoDto {
   coverUrl?: string;
 
   price?: number;
+
 }

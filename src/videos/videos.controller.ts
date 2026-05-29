@@ -22,7 +22,11 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { v2 as cloudinary } from 'cloudinary';
 import * as streamifier from 'streamifier';
 
-import { memoryStorage } from 'multer';
+import { diskStorage } from 'multer';
+
+import * as fs from 'fs';
+
+import { promisify } from 'util';
 
 @Controller('videos')
 export class VideosController {
@@ -36,17 +40,19 @@ export class VideosController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
-  @UseInterceptors(
+ @UseInterceptors(
   FileFieldsInterceptor(
     [
       { name: 'file', maxCount: 1 },
       { name: 'cover', maxCount: 1 },
     ],
     {
-      storage: memoryStorage(),
+      storage: diskStorage({
+        destination: './uploads',
+      }),
 
       limits: {
-        fileSize: 1024 * 1024 * 200,
+        fileSize: 1024 * 1024 * 50,
       },
     },
   ),
@@ -161,57 +167,25 @@ export class VideosController {
   // CLOUDINARY UPLOAD
   // =====================================
 
-  private async uploadToCloudinary(
+ private async uploadToCloudinary(
   file,
   resource_type,
   folder,
 ) {
-  return new Promise<string>(
-    (resolve, reject) => {
 
-      if (!file || !file.buffer) {
+  const uploadResult =
+    await cloudinary.uploader.upload(
+      file.path,
+      {
+        resource_type,
+        folder,
+      },
+    );
 
-        console.log('INVALID FILE:', file);
+  // DELETE TEMP FILE
+  fs.unlinkSync(file.path);
 
-        return reject(
-          'File buffer missing',
-        );
-      }
-
-      const stream =
-        cloudinary.uploader.upload_stream(
-          {
-            resource_type,
-            folder,
-          },
-          (error, result) => {
-
-            if (error) {
-
-              console.log(
-                'CLOUDINARY ERROR:',
-                error,
-              );
-
-              return reject(error);
-            }
-
-            if (!result) {
-
-              return reject(
-                'Upload failed',
-              );
-            }
-
-            resolve(result.secure_url);
-          },
-        );
-
-      streamifier
-        .createReadStream(file.buffer)
-        .pipe(stream);
-    },
-  );
+  return uploadResult.secure_url;
 }
 
   // =====================================

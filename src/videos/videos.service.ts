@@ -69,7 +69,7 @@ return this.videoRepository.findOne({
   type: v.type,
 
   videoUrl: v.videoUrl,
-  file: v.fileUrl,
+  fileUrl: v.fileUrl,
   coverUrl: v.coverUrl,
 
   price: v.price,
@@ -107,7 +107,7 @@ async findOne(id: number) {
     type: video.type,
 
     videoUrl: video.videoUrl,
-    file: video.fileUrl,
+    fileUrl: video.fileUrl,
     coverUrl: video.coverUrl,
 
     price: video.price,
@@ -253,12 +253,13 @@ async getMarket(type: string) {
     type: item.type,
 
     videoUrl: item.videoUrl,
-    file: item.fileUrl,
+    fileUrl: item.fileUrl,
     coverUrl: item.coverUrl,
 
     price: item.price,
 
-    username: item.creator?.username || 'User',
+    creatorUsername:
+  item.creator?.username || 'User',
   }));
 } 
 

@@ -27,7 +27,10 @@ export class Video {
   @Column({ nullable: true })
 videoUrl: string; 
 
-@Column({ default: 'video' })
+@Column({
+  type: 'varchar',
+  default: 'video',
+})
 type: string; // "video" | "ebook" | "fashion"
 
 @Column({ nullable: true })

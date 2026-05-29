@@ -35,11 +35,20 @@ export class VideosController {
   @Post()
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(
-    FileFieldsInterceptor([
+  FileFieldsInterceptor(
+    [
       { name: 'file', maxCount: 1 },
       { name: 'cover', maxCount: 1 },
-    ]),
-  )
+    ],
+    {
+      limits: {
+        fileSize: 1024 * 1024 * 200,
+      },
+    },
+  ),
+)
+
+
   async uploadContent(
     @UploadedFiles()
     files: {

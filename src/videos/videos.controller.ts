@@ -146,6 +146,8 @@ export class VideosController {
       );
     }
 
+    console.log('PRICE RECEIVED:', body.price);
+
     return this.videosService.create(
       {
         ...body,
@@ -155,9 +157,11 @@ export class VideosController {
         fileUrl,
         coverUrl,
 
-        price: body.price
-          ? Number(body.price)
-          : null,
+        price:
+  body.price &&
+  !isNaN(Number(String(body.price).replace(/,/g, '')))
+    ? Number(String(body.price).replace(/,/g, ''))
+    : 0,
       },
       req.user.userId,
     );

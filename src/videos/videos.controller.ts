@@ -28,6 +28,12 @@ import * as fs from 'fs';
 
 import { promisify } from 'util';
 
+import * as path from 'path';
+
+if (!fs.existsSync('./uploads')) {
+  fs.mkdirSync('./uploads', { recursive: true });
+}
+
 @Controller('videos')
 export class VideosController {
   constructor(
@@ -48,8 +54,8 @@ export class VideosController {
     ],
     {
       storage: diskStorage({
-        destination: './uploads',
-      }),
+  destination: path.join(process.cwd(), 'uploads'),
+}),
 
       limits: {
         fileSize: 1024 * 1024 * 50,
@@ -72,6 +78,16 @@ export class VideosController {
     const { type } = body;
 
     const file = files?.file?.[0];
+
+    console.log('BODY:', body);
+
+console.log('FILE:', {
+  originalname: file?.originalname,
+  mimetype: file?.mimetype,
+  size: file?.size,
+  path: file?.path,
+});
+
     const cover = files?.cover?.[0];
 
     if (!type) {
@@ -177,14 +193,20 @@ export class VideosController {
   folder,
 ) {
 
-  const uploadResult =
-    await cloudinary.uploader.upload(
-      file.path,
-      {
-        resource_type,
-        folder,
-      },
-    );
+  console.log('FILE PATH:', file.path);
+console.log('RESOURCE TYPE:', resource_type);
+console.log('FOLDER:', folder);
+
+const uploadResult =
+  await cloudinary.uploader.upload(
+    file.path,
+    {
+      resource_type,
+      folder,
+    },
+  );
+
+console.log('CLOUDINARY RESULT:', uploadResult.secure_url);
 
   // DELETE TEMP FILE
   fs.unlinkSync(file.path);

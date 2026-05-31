@@ -8,12 +8,15 @@ import { Video } from './video.entity';
 import { User } from '../users/user.entity';
 import { Understand } from '../understand/understand.entity';
 
+import { Library } from '../library/library.entity';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Video,
       User,
       Understand,
+      Library,
     ]),
   ],
 

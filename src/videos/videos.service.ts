@@ -11,6 +11,7 @@ import { Video } from './video.entity';
 import { CreateVideoDto } from './dto/create-video.dto';
 import { User } from '../users/user.entity';
 import { Understand } from '../understand/understand.entity';
+import { Library } from '../library/library.entity';
 
 @Injectable()
 export class VideosService {
@@ -22,7 +23,10 @@ export class VideosService {
     private userRepository: Repository<User>,
 
     @InjectRepository(Understand)
-    private understandRepository: Repository<Understand>,
+private understandRepository: Repository<Understand>,
+
+@InjectRepository(Library)
+private libraryRepository: Repository<Library>,
   ) {}
 
   async create(dto: any, userId: number)  {
@@ -107,7 +111,7 @@ async findOne(id: number) {
     type: video.type,
 
     videoUrl: video.videoUrl,
-    fileUrl: video.fileUrl,
+    
     coverUrl: video.coverUrl,
 
     price: video.price,
@@ -262,5 +266,69 @@ async getMarket(type: string) {
   item.creator?.username || 'User',
   }));
 } 
+
+async updateVideo(
+  id: number,
+  dto: any,
+  userId: number,
+) {
+
+  const video =
+    await this.videoRepository.findOne({
+      where: { id },
+    });
+
+  if (!video) {
+    throw new NotFoundException();
+  }
+
+  if (video.creatorId !== userId) {
+    throw new ForbiddenException();
+  }
+
+  Object.assign(video, dto);
+
+  return this.videoRepository.save(video);
+}
+
+async readBook(
+  bookId: number,
+  userId: number,
+) {
+
+  const book =
+    await this.videoRepository.findOne({
+      where:{
+        id: bookId,
+        type:'ebook'
+      }
+    });
+
+  if(!book){
+    throw new NotFoundException(
+      'Book not found'
+    );
+  }
+
+  const purchase =
+    await this.libraryRepository.findOne({
+      where:{
+        userId,
+        productId: bookId,
+      }
+    });
+
+  if(!purchase){
+    throw new ForbiddenException(
+      'Purchase required'
+    );
+  }
+
+  return {
+    id: book.id,
+    title: book.title,
+    fileUrl: book.fileUrl,
+  };
+}
 
 }

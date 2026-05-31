@@ -1,5 +1,6 @@
 import {
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -108,6 +109,61 @@ export class LibraryService {
       book.creator?.username,
 
   }));
+
+}
+
+async userOwnsBook(
+  userId: number,
+  productId: number,
+) {
+
+  const item =
+    await this.libraryRepository.findOne({
+      where: {
+        userId,
+        productId,
+      },
+    });
+
+  return !!item;
+
+}
+
+async getOwnedBook(
+  userId: number,
+  productId: number,
+) {
+
+  const owns =
+    await this.userOwnsBook(
+      userId,
+      productId,
+    );
+
+  if (!owns) {
+    throw new NotFoundException(
+      'You do not own this ebook',
+    );
+  }
+
+  const book =
+    await this.videoRepository.findOne({
+      where: {
+        id: productId,
+      },
+    });
+
+  if (!book) {
+    throw new NotFoundException(
+      'Book not found',
+    );
+  }
+
+  return {
+    id: book.id,
+    title: book.title,
+    fileUrl: book.fileUrl,
+  };
 
 }
 

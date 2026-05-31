@@ -5,6 +5,7 @@ import {
   Body,
   Param,
   Delete,
+  Patch,
   Query,
   UseGuards,
   Req,
@@ -268,6 +269,19 @@ console.log('CLOUDINARY RESULT:', uploadResult.secure_url);
     );
   }
 
+  // Ebook reader
+  @UseGuards(AuthGuard('jwt'))
+@Get(':id/read')
+readBook(
+  @Param('id') id: string,
+  @Req() req,
+) {
+  return this.videosService.readBook(
+    Number(id),
+    req.user.userId,
+  );
+}
+
   // =====================================
   // SINGLE CONTENT
   // IMPORTANT:
@@ -312,4 +326,27 @@ console.log('CLOUDINARY RESULT:', uploadResult.secure_url);
       req.user.userId,
     );
   }
+
+  @UseGuards(AuthGuard('jwt'))
+@Get('me')
+getMyVideos(@Req() req) {
+  return this.videosService.getVideosByCreator(
+    req.user.userId,
+  );
+}
+
+@UseGuards(AuthGuard('jwt'))
+@Patch(':id')
+updateVideo(
+  @Param('id') id: string,
+  @Body() body: any,
+  @Req() req,
+) {
+  return this.videosService.updateVideo(
+    Number(id),
+    body,
+    req.user.userId,
+  );
+}
+
 }

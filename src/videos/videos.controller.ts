@@ -269,6 +269,15 @@ console.log('CLOUDINARY RESULT:', uploadResult.secure_url);
     );
   }
 
+  // Get videos for creator dashboard
+@UseGuards(AuthGuard('jwt'))
+@Get('me')
+getMyVideos(@Req() req) {
+  return this.videosService.getVideosByCreator(
+    req.user.userId,
+  );
+}
+
   // Ebook reader
   @UseGuards(AuthGuard('jwt'))
 @Get(':id/read')
@@ -281,6 +290,7 @@ readBook(
     req.user.userId,
   );
 }
+
 
   // =====================================
   // SINGLE CONTENT
@@ -327,14 +337,7 @@ readBook(
     );
   }
 
-  @UseGuards(AuthGuard('jwt'))
-@Get('me')
-getMyVideos(@Req() req) {
-  return this.videosService.getVideosByCreator(
-    req.user.userId,
-  );
-}
-
+  
 @UseGuards(AuthGuard('jwt'))
 @Patch(':id')
 updateVideo(

@@ -149,19 +149,27 @@ console.log('FILE:', {
     // FASHION
     // =====================================
 
-    if (type === 'fashion') {
-      if (!file) {
-        throw new BadRequestException(
-          'Image/video required',
-        );
-      }
+    if (
+  type === 'fashion' ||
+  type === 'essential'
+) {
 
-      fileUrl = await this.uploadToCloudinary(
-        file,
-        'auto',
-        'vindarr_fashion',
-      );
-    }
+  if (!file) {
+    throw new BadRequestException(
+      'Image/video required',
+    );
+  }
+
+  fileUrl =
+    await this.uploadToCloudinary(
+      file,
+      'auto',
+      type === 'fashion'
+        ? 'vindarr_fashion'
+        : 'vindarr_essentials',
+    );
+
+}
 
     console.log('PRICE RECEIVED:', body.price);
 

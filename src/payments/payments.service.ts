@@ -253,6 +253,12 @@ const creatorShare =
       product.type === 'ebook'
     ) {
 
+      console.log(
+  'ADDING TO LIBRARY',
+  order.buyerId,
+  product.id,
+);
+
       await this.libraryService.addToLibrary(
         order.buyerId,
         product.id,

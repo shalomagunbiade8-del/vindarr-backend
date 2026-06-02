@@ -286,19 +286,6 @@ getMyVideos(@Req() req) {
   );
 }
 
-  // Ebook reader
-  @UseGuards(AuthGuard('jwt'))
-@Get(':id/read')
-readBook(
-  @Param('id') id: string,
-  @Req() req,
-) {
-  return this.videosService.readBook(
-    Number(id),
-    req.user.userId,
-  );
-}
-
 
   // =====================================
   // SINGLE CONTENT

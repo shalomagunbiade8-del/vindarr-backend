@@ -291,44 +291,4 @@ async updateVideo(
   return this.videoRepository.save(video);
 }
 
-async readBook(
-  bookId: number,
-  userId: number,
-) {
-
-  const book =
-    await this.videoRepository.findOne({
-      where:{
-        id: bookId,
-        type:'ebook'
-      }
-    });
-
-  if(!book){
-    throw new NotFoundException(
-      'Book not found'
-    );
-  }
-
-  const purchase =
-    await this.libraryRepository.findOne({
-      where:{
-        userId,
-        productId: bookId,
-      }
-    });
-
-  if(!purchase){
-    throw new ForbiddenException(
-      'Purchase required'
-    );
-  }
-
-  return {
-    id: book.id,
-    title: book.title,
-    fileUrl: book.fileUrl,
-  };
-}
-
 }

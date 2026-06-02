@@ -30,34 +30,43 @@ export class LibraryService {
   // =====================================
 
   async addToLibrary(
-    userId: number,
-    productId: number,
-  ) {
+  userId: number,
+  productId: number,
+) {
 
-    const existing =
-      await this.libraryRepository.findOne({
-        where: {
-          userId,
-          productId,
-        },
-      });
-
-    if (existing) {
-      return existing;
-    }
-
-    const item =
-      this.libraryRepository.create({
+  const existing =
+    await this.libraryRepository.findOne({
+      where: {
         userId,
         productId,
-      });
+      },
+    });
 
-    return this.libraryRepository.save(
-      item,
+  if (existing) {
+    console.log(
+      'LIBRARY ENTRY ALREADY EXISTS',
+      userId,
+      productId,
     );
 
+    return existing;
   }
 
+  console.log(
+    'LIBRARY ENTRY CREATED',
+    userId,
+    productId,
+  );
+
+  const item =
+    this.libraryRepository.create({
+      userId,
+      productId,
+    });
+
+  return this.libraryRepository.save(item);
+
+}
   // =====================================
   // GET USER LIBRARY
   // =====================================
@@ -82,12 +91,12 @@ export class LibraryService {
   }
 
   const books =
-    await this.videoRepository.find({
-
-      where:
-        productIds.map(id => ({
-          id,
-        })),
+  await this.videoRepository.find({
+    where:
+      productIds.map(id => ({
+        id,
+        type: 'ebook',
+      })),
 
       relations: ['creator'],
 

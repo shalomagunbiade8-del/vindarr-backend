@@ -58,6 +58,8 @@ export class PaymentsService {
         productId,
       );
 
+      console.log('PRODUCT FOUND', product);
+
     if (!product) {
       throw new NotFoundException(
         'Product not found',
@@ -192,6 +194,8 @@ export class PaymentsService {
         orderId,
       );
 
+      console.log('ORDER FOUND', order);
+
       if (
   data.data.metadata.orderId !== order.id
 ) {
@@ -264,10 +268,15 @@ const creatorShare =
   product.id,
 );
 
+
       await this.libraryService.addToLibrary(
         order.buyerId,
         product.id,
       );
+
+      console.log(
+  'LIBRARY INSERT COMPLETE'
+);
 
     }
 

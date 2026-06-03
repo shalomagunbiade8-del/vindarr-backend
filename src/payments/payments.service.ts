@@ -217,11 +217,20 @@ console.log(
 );
 
       if (
-  data.data.metadata.orderId !== order.id
+  Number(data.data.metadata.orderId) !==
+  Number(order.id)
 ) {
+
+  console.log(
+    'METADATA MISMATCH',
+    data.data.metadata.orderId,
+    order.id,
+  );
+
   throw new BadRequestException(
     'Invalid payment metadata',
   );
+
 }
 
     if (!order) {
@@ -305,6 +314,12 @@ const creatorShare =
 
       console.log(
   'ADDING TO LIBRARY',
+  order.buyerId,
+  product.id,
+);
+
+console.log(
+  'ABOUT TO INSERT LIBRARY',
   order.buyerId,
   product.id,
 );

@@ -179,6 +179,16 @@ export class PaymentsService {
     const data =
       response.data;
 
+      console.log(
+  'PAYSTACK RESPONSE:',
+  JSON.stringify(data, null, 2),
+);
+
+console.log(
+  'PAYSTACK METADATA:',
+  data.data.metadata,
+);
+
     if (
       data.data.status !== 'success'
     ) {
@@ -195,6 +205,16 @@ export class PaymentsService {
       );
 
       console.log('ORDER FOUND', order);
+
+      console.log(
+  'PAYSTACK ORDER ID:',
+  data.data.metadata?.orderId,
+);
+
+console.log(
+  'DATABASE ORDER ID:',
+  order.id,
+);
 
       if (
   data.data.metadata.orderId !== order.id

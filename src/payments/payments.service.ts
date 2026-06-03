@@ -90,31 +90,30 @@ export class PaymentsService {
       );
 
     const response =
-      await axios.post(
+  await axios.post(
+    'https://api.paystack.co/transaction/initialize',
+    {
+      email: buyer.email,
 
-        'https://api.paystack.co/transaction/initialize',
+      amount:
+        Number(product.price) * 100,
 
-        {
+      callback_url:
+        'https://vindarr.com/payment-success.html',
 
-          email: buyer.email,
+      metadata: {
 
-          amount:
-            Number(product.price) * 100,
+        orderId: order.id,
 
-          metadata: {
+        buyerId,
 
-            orderId: order.id,
+        productId,
 
-            buyerId,
+        type: product.type,
 
-            productId,
+      },
 
-            type: product.type,
-
-          },
-
-        },
-
+    },
         {
 
           headers: {
@@ -150,6 +149,12 @@ export class PaymentsService {
     reference: string,
     orderId: number,
   ) {
+
+    console.log(
+  'VERIFY REQUEST RECEIVED',
+  reference,
+  orderId,
+);
 
     const response =
       await axios.get(

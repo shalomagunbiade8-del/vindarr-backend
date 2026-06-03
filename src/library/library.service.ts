@@ -64,6 +64,12 @@ export class LibraryService {
       productId,
     });
 
+    console.log(
+  'LIBRARY ENTRY CREATED',
+  userId,
+  productId,
+);
+
   return this.libraryRepository.save(item);
 
 }

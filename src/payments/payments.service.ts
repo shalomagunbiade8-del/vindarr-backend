@@ -243,22 +243,43 @@ console.log(
 
 }
 
-    if (
-      data.data.amount !==
-      Number(order.amount) * 100
-    ) {
+    const paystackAmount =
+  Number(data.data.amount);
 
-      throw new BadRequestException(
-        'Amount mismatch',
-      );
+const orderAmount =
+  Number(order.amount) * 100;
 
-    }
+console.log(
+  'PAYSTACK AMOUNT:',
+  paystackAmount,
+);
+
+console.log(
+  'ORDER AMOUNT:',
+  orderAmount,
+);
+
+if (paystackAmount !== orderAmount) {
+
+  throw new BadRequestException(
+    `Amount mismatch: ${paystackAmount} vs ${orderAmount}`,
+  );
+
+}
+
+console.log(
+  'PAYMENT VERIFIED - MARKING ORDER PAID'
+);
 
     await this.ordersService
       .markOrderAsPaid(
         order.id,
         reference,
       );
+
+      console.log(
+  'ORDER MARKED PAID'
+);
 
     const product =
       await this.videosService.findOne(

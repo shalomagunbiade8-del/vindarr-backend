@@ -175,8 +175,8 @@ async getOwnedBook(
   }
 
   console.log(
-  'BOOK FILE URL:',
-  book.fileUrl,
+  'FULL BOOK:',
+  JSON.stringify(book, null, 2),
 );
 
   return {

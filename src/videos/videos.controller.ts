@@ -223,6 +223,9 @@ const uploadResult =
     {
       resource_type,
       folder,
+
+      use_filename: true,
+      unique_filename: false,
     },
   );
 
@@ -231,7 +234,17 @@ console.log('CLOUDINARY RESULT:', uploadResult.secure_url);
   // DELETE TEMP FILE
   fs.unlinkSync(file.path);
 
-  return uploadResult.secure_url;
+  if (
+  resource_type === 'raw' &&
+  file.originalname.endsWith('.pdf')
+) {
+
+  return `${uploadResult.secure_url}.pdf`;
+
+}
+
+return uploadResult.secure_url;
+
 }
 
   // =====================================

@@ -124,26 +124,37 @@ console.log('FILE:', {
     // =====================================
 
     if (type === 'ebook') {
-      if (!file) {
-        throw new BadRequestException(
-          'PDF required',
-        );
-      }
 
-      fileUrl = await this.uploadToCloudinary(
-        file,
-        'raw',
-        'vindarr_ebooks',
+  if (!file) {
+    throw new BadRequestException(
+      'PDF required',
+    );
+  }
+
+  fileUrl =
+    await this.uploadToCloudinary(
+      file,
+      'raw',
+      'vindarr_ebooks',
+    );
+
+  console.log(
+    'PDF URL SAVED:',
+    fileUrl,
+  );
+
+  if (cover) {
+
+    coverUrl =
+      await this.uploadToCloudinary(
+        cover,
+        'image',
+        'vindarr_covers',
       );
 
-      if (cover) {
-        coverUrl = await this.uploadToCloudinary(
-          cover,
-          'image',
-          'vindarr_covers',
-        );
-      }
-    }
+  }
+
+}
 
     // =====================================
     // FASHION

@@ -174,6 +174,11 @@ async getOwnedBook(
     );
   }
 
+  console.log(
+  'BOOK FILE URL:',
+  book.fileUrl,
+);
+
   return {
     id: book.id,
     title: book.title,

@@ -111,7 +111,7 @@ async findOne(id: number) {
     type: video.type,
 
     videoUrl: video.videoUrl,
-    
+    fileUrl: video.fileUrl,
     coverUrl: video.coverUrl,
 
     price: video.price,

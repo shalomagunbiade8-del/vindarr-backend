@@ -231,6 +231,11 @@ const uploadResult =
 
 console.log('CLOUDINARY RESULT:', uploadResult.secure_url);
 
+console.log(
+  'CLOUDINARY FULL RESULT:',
+  JSON.stringify(uploadResult, null, 2)
+);
+
   // DELETE TEMP FILE
   fs.unlinkSync(file.path);
 

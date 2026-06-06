@@ -38,6 +38,11 @@ private libraryRepository: Repository<Library>,
       throw new NotFoundException('User not found');
     }
 
+    console.log(
+  "FILE URL RECEIVED BY SERVICE:",
+  dto.fileUrl,
+);
+
     const video = this.videoRepository.create({
       ...dto,
       creator: user,

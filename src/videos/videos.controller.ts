@@ -133,10 +133,16 @@ console.log('FILE:', {
 
   fileUrl =
     await this.uploadToCloudinary(
+
       file,
       'raw',
       'vindarr_ebooks',
     );
+
+    console.log(
+  "UPLOAD RETURNED:",
+  fileUrl,
+);
 
   console.log(
     'PDF URL SAVED:',
@@ -239,16 +245,7 @@ console.log(
   // DELETE TEMP FILE
   fs.unlinkSync(file.path);
 
-  if (
-  resource_type === 'raw' &&
-  file.originalname.endsWith('.pdf')
-) {
-
-  return `${uploadResult.secure_url}.pdf`;
-
-}
-
-return uploadResult.secure_url;
+  return uploadResult.secure_url;
 
 }
 

@@ -179,6 +179,11 @@ async getOwnedBook(
   JSON.stringify(book, null, 2),
 );
 
+console.log(
+  "RETURNING FILE URL:",
+  book.fileUrl,
+);
+
   return {
     id: book.id,
     title: book.title,

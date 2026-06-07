@@ -1,27 +1,24 @@
 import { Module } from '@nestjs/common';
 
-import { PayoutsService } from './payouts.service';
-
-import { PayoutsController } from './payouts.controller';
-
-import { WalletsModule } from '../wallets/wallets.module';
-
-import { UsersModule } from '../users/users.module';
-
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Withdrawal } from '../withdrawals/withdrawal.entity';
 
+import { PayoutsService } from './payouts.service';
+import { PayoutsController } from './payouts.controller';
+
+import { WalletsModule } from '../wallets/wallets.module';
+import { UsersModule } from '../users/users.module';
+
 @Module({
-
   imports: [
-  WalletsModule,
-  UsersModule,
+    WalletsModule,
+    UsersModule,
 
-  TypeOrmModule.forFeature([
-    Withdrawal,
-  ]),
-],
+    TypeOrmModule.forFeature([
+      Withdrawal,
+    ]),
+  ],
 
   providers: [
     PayoutsService,
@@ -30,7 +27,5 @@ import { Withdrawal } from '../withdrawals/withdrawal.entity';
   controllers: [
     PayoutsController,
   ],
-
 })
-
 export class PayoutsModule {}

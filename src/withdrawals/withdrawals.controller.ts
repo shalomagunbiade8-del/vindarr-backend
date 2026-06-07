@@ -61,4 +61,17 @@ export class WithdrawalsController {
 
   }
 
+  @UseGuards(AuthGuard('jwt'))
+@Get('me')
+getMyWithdrawals(
+  @Req() req,
+) {
+
+  return this.withdrawalsService
+    .getUserWithdrawals(
+      req.user.userId,
+    );
+
+}
+
 }

@@ -102,4 +102,18 @@ export class UsersController {
       dto,
     );
   }
+
+  // Fetch bank details
+  @UseGuards(AuthGuard('jwt'))
+@Get('bank-details')
+getBankDetails(
+  @Req() req,
+) {
+
+  return this.usersService.findOneById(
+    req.user.userId,
+  );
+
+}
+
 }

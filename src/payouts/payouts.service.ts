@@ -43,6 +43,14 @@ export class PayoutsService {
 
     }
 
+    if (amount < 1000) {
+
+  throw new BadRequestException(
+    'Minimum withdrawal is ₦1000',
+  );
+
+}
+
     const wallet =
       await this.walletsService.getWallet(
         userId,

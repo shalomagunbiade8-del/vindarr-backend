@@ -59,4 +59,22 @@ export class WithdrawalsService {
 
   }
 
+  async getUserWithdrawals(
+  userId: number,
+) {
+
+  return this.withdrawalRepository.find({
+
+    where: {
+      userId,
+    },
+
+    order: {
+      createdAt: 'DESC',
+    },
+
+  });
+
+}
+
 }

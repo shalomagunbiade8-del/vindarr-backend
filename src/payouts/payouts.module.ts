@@ -8,12 +8,20 @@ import { WalletsModule } from '../wallets/wallets.module';
 
 import { UsersModule } from '../users/users.module';
 
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { Withdrawal } from '../withdrawals/withdrawal.entity';
+
 @Module({
 
   imports: [
-    WalletsModule,
-    UsersModule,
-  ],
+  WalletsModule,
+  UsersModule,
+
+  TypeOrmModule.forFeature([
+    Withdrawal,
+  ]),
+],
 
   providers: [
     PayoutsService,

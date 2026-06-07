@@ -4,6 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { InjectRepository } from '@nestjs/typeorm';
+
+import { Repository } from 'typeorm';
+
+import { Withdrawal } from '../withdrawals/withdrawal.entity';
+
 import { WalletsService } from '../wallets/wallets.service';
 
 import { UsersService } from '../users/users.service';
@@ -14,11 +20,15 @@ export class PayoutsService {
 
   constructor(
 
-    private walletsService: WalletsService,
+  private walletsService: WalletsService,
 
-    private usersService: UsersService,
+  private usersService: UsersService,
 
-  ) {}
+  @InjectRepository(Withdrawal)
+  private withdrawalRepository:
+    Repository<Withdrawal>,
+
+) {}
 
   async withdraw(
     userId: number,
@@ -67,14 +77,56 @@ if (
   );
 }
 
-    wallet.balance =
-      Number(wallet.balance) - amount;
+    await this.walletsService.debitWallet(
+  userId,
+  amount,
+);
 
-    return {
-      success: true,
-      amount,
-      balance: wallet.balance,
-    };
+const withdrawal =
+  this.withdrawalRepository.create({
+
+    userId,
+
+    amount,
+
+    status: 'pending',
+
+    bankName:
+      user.bankName,
+
+    accountNumber:
+      user.accountNumber,
+
+    accountName:
+      user.accountName,
+
+  });
+
+await this.withdrawalRepository.save(
+  withdrawal,
+);
+
+    const updatedWallet =
+  await this.walletsService.getWallet(
+    userId,
+  );
+
+return {
+
+  success: true,
+
+  withdrawalId:
+    withdrawal.id,
+
+  amount,
+
+  status:
+    withdrawal.status,
+
+  balance:
+    updatedWallet.balance,
+
+};
 
   }
 

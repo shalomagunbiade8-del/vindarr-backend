@@ -90,4 +90,18 @@ export class WalletsService {
 
   }
 
+  async debitWallet(
+  userId: number,
+  amount: number,
+) {
+  const wallet =
+    await this.getWallet(userId);
+
+  wallet.balance =
+    Number(wallet.balance) -
+    Number(amount);
+
+  return this.walletRepository.save(wallet);
+}
+
 }

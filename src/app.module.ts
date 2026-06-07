@@ -40,6 +40,8 @@ import { EarningsModule } from './earnings/earnings.module';
 import { SearchModule } from './search/search.module';
 
 import { Story } from './stories/story.entity';
+import { WithdrawalsModule } from './withdrawals/withdrawals.module';
+import { Withdrawal } from './withdrawals/withdrawal.entity';
 
 
 @Module({
@@ -68,6 +70,7 @@ Wallet,
 Library,
 Story,
 Message,
+ Withdrawal,
     ],
 
     synchronize: true,
@@ -110,6 +113,7 @@ PayoutsModule,
 LibraryModule,
 EarningsModule,
 SearchModule,
+WithdrawalsModule,
 ],
 
   // =====================================

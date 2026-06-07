@@ -4,6 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { Withdrawal } from './withdrawal.entity';
 
+import { WithdrawalsService } from './withdrawals.service';
+
+import { WithdrawalsController } from './withdrawals.controller';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -11,8 +15,16 @@ import { Withdrawal } from './withdrawal.entity';
     ]),
   ],
 
+  providers: [
+    WithdrawalsService,
+  ],
+
+  controllers: [
+    WithdrawalsController,
+  ],
+
   exports: [
-    TypeOrmModule,
+    WithdrawalsService,
   ],
 })
 export class WithdrawalsModule {}

@@ -118,19 +118,42 @@ async makeAdmin(username: string) {
 } 
 
 // bank payout related
-async updateBankDetails(userId: number, dto: any) {
-  const user = await this.usersRepository.findOne({ where: { id: userId } });
+async updateBankDetails(
+  userId: number,
+  dto: any,
+) {
+
+  console.log('UPDATE DTO:', dto);
+
+  const user =
+    await this.usersRepository.findOne({
+      where: { id: userId },
+    });
 
   if (!user) {
     throw new Error('User not found');
   }
 
-  user.bankName = dto.bankName;
-  user.accountNumber = dto.accountNumber;
-  user.accountName = dto.accountName;
+  console.log('USER BEFORE:', user);
 
-  return this.usersRepository.save(user);
-} 
+  user.bankName =
+    dto.bankName;
+
+  user.accountNumber =
+    dto.accountNumber;
+
+  user.accountName =
+    dto.accountName;
+
+  const saved =
+    await this.usersRepository.save(
+      user,
+    );
+
+  console.log('USER AFTER:', saved);
+
+  return saved;
+}
 
 async searchUsers(query: string) {
   if (!query) return [];

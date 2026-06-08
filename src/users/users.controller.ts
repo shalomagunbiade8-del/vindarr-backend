@@ -92,16 +92,22 @@ export class UsersController {
   // UPDATE BANK DETAILS
   // =========================
   @UseGuards(AuthGuard('jwt'))
-  @Patch('bank-details')
-  updateBankDetails(
-    @Req() req,
-    @Body() dto: UpdateBankDto,
-  ) {
-    return this.usersService.updateBankDetails(
-      req.user.userId,
-      dto,
-    );
-  }
+@Patch('bank-details')
+updateBankDetails(
+  @Req() req,
+  @Body() dto: UpdateBankDto,
+) {
+
+  console.log(
+    'BANK DTO:',
+    dto,
+  );
+
+  return this.usersService.updateBankDetails(
+    req.user.userId,
+    dto,
+  );
+}
 
   // Fetch bank details
   @UseGuards(AuthGuard('jwt'))
@@ -115,5 +121,6 @@ getBankDetails(
   );
 
 }
+
 
 }

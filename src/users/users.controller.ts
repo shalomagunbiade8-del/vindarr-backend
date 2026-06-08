@@ -51,6 +51,19 @@ export class UsersController {
     return this.usersService.searchUsers(query);
   }
 
+   // Fetch bank details
+  @UseGuards(AuthGuard('jwt'))
+@Get('bank-details')
+getBankDetails(
+  @Req() req,
+) {
+
+  return this.usersService.findOneById(
+    req.user.userId,
+  );
+
+}
+
   // =========================
   // PUBLIC USER PROFILE
   // GET /users/:id
@@ -108,19 +121,5 @@ updateBankDetails(
     dto,
   );
 }
-
-  // Fetch bank details
-  @UseGuards(AuthGuard('jwt'))
-@Get('bank-details')
-getBankDetails(
-  @Req() req,
-) {
-
-  return this.usersService.findOneById(
-    req.user.userId,
-  );
-
-}
-
 
 }

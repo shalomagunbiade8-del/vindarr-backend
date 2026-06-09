@@ -91,26 +91,60 @@ export class SearchService {
 
     // =========================
     // PRODUCTS
+    // FASHION + ESSENTIALS
     // =========================
 
     const products =
-      await this.videoRepo.find({
+      await this.videoRepo
+        .createQueryBuilder('video')
+        .leftJoinAndSelect(
+          'video.creator',
+          'creator',
+        )
+        .where(
+          '(video.type = :fashion OR video.type = :essential)',
+          {
+            fashion: 'fashion',
+            essential: 'essential',
+          },
+        )
+        .andWhere(
+          '(LOWER(video.title) LIKE LOWER(:q) OR LOWER(video.context) LIKE LOWER(:q))',
+          {
+            q: `%${query}%`,
+          },
+        )
+        .orderBy(
+          'video.createdAt',
+          'DESC',
+        )
+        .take(20)
+        .getMany();
+
+    // =========================
+    // STORIES
+    // =========================
+
+    const stories =
+      await this.storyRepo.find({
         where: [
           {
-            title: ILike(`%${query}%`),
-            type: 'fashion'
+            title: ILike(`%${query}%`)
           },
           {
-            context: ILike(`%${query}%`),
-            type: 'fashion'
+            content: ILike(`%${query}%`)
           }
         ],
-        relations: ['creator'],
+        relations: ['user'],
         order: {
           createdAt: 'DESC'
         },
         take: 10
       });
+
+    // =========================
+    // RETURN
+    // =========================
 
     return {
 
@@ -143,6 +177,14 @@ export class SearchService {
         videoUrl: product.videoUrl,
         coverImage: product.coverUrl,
         price: product.price
+      })),
+
+      stories: stories.map(story => ({
+        id: story.id,
+        title: story.title,
+        imageUrl: story.imageUrl,
+        username:
+          story.user?.username || 'User'
       }))
 
     };

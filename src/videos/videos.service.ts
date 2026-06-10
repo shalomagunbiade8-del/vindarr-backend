@@ -58,43 +58,64 @@ return this.videoRepository.findOne({
 
   }
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll(
+  page: number = 1,
+  limit: number = 10,
+) {
 
   const skip = (page - 1) * limit;
 
-  const videos = await this.videoRepository.find({
-  relations: ['creator', 'comments', 'comments.author'], 
-    order: { createdAt: 'DESC' },
-    skip: skip,
-    take: limit
-  });
+  const [videos, total] =
+    await this.videoRepository.findAndCount({
+      relations: [
+        'creator',
+        'comments',
+        'comments.author',
+      ],
+      order: {
+        createdAt: 'DESC',
+      },
+      skip,
+      take: limit,
+    });
 
-  return videos.map(v => ({
-  id: v.id,
-  title: v.title,
-  category: v.category,
-  context: v.context,
+  return {
+    data: videos.map(v => ({
+      id: v.id,
+      title: v.title,
+      category: v.category,
+      context: v.context,
 
-  type: v.type,
+      type: v.type,
 
-  videoUrl: v.videoUrl,
-  fileUrl: v.fileUrl,
-  coverUrl: v.coverUrl,
+      videoUrl: v.videoUrl,
+      fileUrl: v.fileUrl,
+      coverUrl: v.coverUrl,
 
-  price: v.price,
+      price: v.price,
 
-  understandCount: v.understandCount,
+      understandCount: v.understandCount,
 
-  creatorId: v.creatorId,
-  creatorUsername: v.creator?.username || 'User',
-  creatorAvatar: v.creator?.avatar || null,
+      creatorId: v.creatorId,
+      creatorUsername:
+        v.creator?.username || 'User',
 
-  comments: v.comments || [],
+      creatorAvatar:
+        v.creator?.avatar || null,
 
-  createdAt: v.createdAt,
-}));
+      comments: v.comments || [],
 
-} 
+      createdAt: v.createdAt,
+    })),
+
+    total,
+    page,
+    limit,
+    hasMore:
+      skip + videos.length < total,
+  };
+}
+
 
 async findOne(id: number) {
 

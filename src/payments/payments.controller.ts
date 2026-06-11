@@ -6,6 +6,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Headers,
 } from '@nestjs/common';
 
 import { AuthGuard } from '@nestjs/passport';
@@ -52,24 +53,33 @@ export class PaymentsController {
   // =====================================
 
   @UseGuards(AuthGuard('jwt'))
-  @Get('market/verify')
+ @Get('market/verify')
+verifyMarketPayment(
 
-  verifyMarketPayment(
+  @Query('reference')
+  reference: string,
 
-    @Query('reference')
-    reference: string,
+) {
 
-    @Query('orderId')
-    orderId: number,
+  return this.paymentsService
+    .verifyMarketPayment(
+      reference,
+    );
 
-  ) {
+}
 
-    return this.paymentsService
-      .verifyMarketPayment(
-        reference,
-        Number(orderId),
-      );
 
-  }
+@Post('webhook')
+paystackWebhook(
+  @Body() body: any,
+  @Headers('x-paystack-signature')
+  signature: string,
+) {
+  return this.paymentsService
+    .handleWebhook(
+      body,
+      signature,
+    );
+}
 
 }

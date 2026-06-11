@@ -18,6 +18,8 @@ import { WalletsService } from '../wallets/wallets.service';
 
 import { LibraryService } from '../library/library.service';
 
+import * as crypto from 'crypto';
+
 
 @Injectable()
 
@@ -101,7 +103,9 @@ export class PaymentsService {
         Number(product.price) * 100,
 
       callback_url:
-        'https://vindarr.com/payment-success.html',
+`${this.configService.get(
+  'FRONTEND_URL'
+)}/payment-success.html`,
 
       metadata: {
 
@@ -148,14 +152,12 @@ export class PaymentsService {
   }
 
   async verifyMarketPayment(
-    reference: string,
-    orderId: number,
-  ) {
+  reference: string,
+){
 
     console.log(
   'VERIFY REQUEST RECEIVED',
   reference,
-  orderId,
 );
 
     const response =
@@ -199,16 +201,21 @@ console.log(
 
     }
 
-    const order =
-      await this.ordersService.findById(
-        orderId,
-      );
+    const paystackOrderId =
+  Number(
+    data.data.metadata.orderId,
+  );
 
-      console.log('ORDER FOUND', order);
+const order =
+  await this.ordersService.findById(
+    paystackOrderId,
+  );
 
-      console.log(
+console.log('ORDER FOUND', order);
+
+console.log(
   'PAYSTACK ORDER ID:',
-  data.data.metadata?.orderId,
+  paystackOrderId,
 );
 
 console.log(
@@ -217,7 +224,7 @@ console.log(
 );
 
       if (
-  Number(data.data.metadata.orderId) !==
+  paystackOrderId !==
   Number(order.id)
 ) {
 
@@ -346,5 +353,54 @@ console.log(
     };
 
   }
+
+  async handleWebhook(
+  payload: any,
+  signature: string,
+) {
+
+  const hash =
+    crypto
+      .createHmac(
+        'sha512',
+        this.PAYSTACK_SECRET,
+      )
+      .update(
+        JSON.stringify(payload),
+      )
+      .digest('hex');
+
+  if (hash !== signature) {
+
+    return {
+      success: false,
+    };
+
+  }
+
+  if (
+    payload.event ===
+    'charge.success'
+  ) {
+
+    const reference =
+      payload.data.reference;
+
+    const orderId =
+      Number(
+        payload.data.metadata.orderId,
+      );
+
+    await this.verifyMarketPayment(
+      reference,
+    );
+
+  }
+
+  return {
+    success: true,
+  };
+
+}
 
 }

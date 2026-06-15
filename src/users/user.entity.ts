@@ -43,5 +43,7 @@ accountNumber: string;
 @Column({ nullable: true })
 accountName: string;
 
+@Column({ default: 0 })
+purviewCount: number;
 
 }

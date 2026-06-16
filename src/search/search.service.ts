@@ -40,7 +40,6 @@ export class SearchService {
             bio: ILike(`%${query}%`)
           }
         ],
-        take: 10
       });
 
     // =========================
@@ -48,23 +47,49 @@ export class SearchService {
     // =========================
 
     const videos =
-      await this.videoRepo.find({
-        where: [
-          {
-            title: ILike(`%${query}%`),
-            type: 'video'
-          },
-          {
-            context: ILike(`%${query}%`),
-            type: 'video'
-          }
-        ],
-        relations: ['creator'],
-        order: {
-          createdAt: 'DESC'
-        },
-        take: 10
-      });
+await this.videoRepo
+.createQueryBuilder('video')
+.leftJoinAndSelect(
+  'video.creator',
+  'creator'
+)
+.where(
+  'video.type = :type',
+  {
+    type:'video'
+  }
+)
+.andWhere(
+`
+(
+LOWER(video.title)
+LIKE LOWER(:q)
+
+OR
+
+LOWER(video.context)
+LIKE LOWER(:q)
+
+OR
+
+LOWER(video.category)
+LIKE LOWER(:q)
+
+OR
+
+LOWER(creator.username)
+LIKE LOWER(:q)
+)
+`,
+{
+  q:`%${query}%`
+}
+)
+.orderBy(
+  'video.createdAt',
+  'DESC'
+)
+.getMany();
 
     // =========================
     // EBOOKS
@@ -86,7 +111,7 @@ export class SearchService {
         order: {
           createdAt: 'DESC'
         },
-        take: 10
+        
       });
 
     // =========================
@@ -139,7 +164,6 @@ export class SearchService {
         order: {
           createdAt: 'DESC'
         },
-        take: 10
       });
 
     // =========================
@@ -159,6 +183,8 @@ export class SearchService {
         id: video.id,
         title: video.title,
         videoUrl: video.videoUrl,
+        context: video.context,
+        creatorAvatar: video.creator?.avatar,
         creatorUsername:
           video.creator?.username || 'creator'
       })),

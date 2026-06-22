@@ -12,6 +12,9 @@ import { VideosModule } from '../videos/videos.module';
 import { WalletsModule } from '../wallets/wallets.module';
 import { LibraryModule } from '../library/library.module';
 
+import { NotificationsModule }
+from '../notifications/notifications.module';
+
 @Module({
 
   imports: [
@@ -27,6 +30,8 @@ import { LibraryModule } from '../library/library.module';
     WalletsModule,
 
     LibraryModule,
+
+    NotificationsModule,
 
   ],
 

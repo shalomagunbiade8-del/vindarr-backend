@@ -20,6 +20,9 @@ import { LibraryService } from '../library/library.service';
 
 import * as crypto from 'crypto';
 
+import { NotificationsService }
+from '../notifications/notifications.service';
+
 
 @Injectable()
 
@@ -41,6 +44,8 @@ export class PaymentsService {
 
     private configService: ConfigService,
 
+    private notificationsService:
+    NotificationsService,
   ) {
 
     this.PAYSTACK_SECRET =
@@ -314,6 +319,76 @@ const creatorShare =
       creatorShare,
     );
 
+    // notefecaton
+    const buyer =
+  await this.usersService.findOneById(
+    order.buyerId,
+  );
+
+if (!buyer) {
+  throw new NotFoundException(
+    'Buyer not found',
+  );
+}
+
+await this.notificationsService.createNotification(
+
+  product.creatorId,
+
+  'New Sale 🎉',
+
+  `${buyer.username} purchased your ${product.type} for ₦${Number(order.amount).toLocaleString()}. You earned ₦${Number(creatorShare).toLocaleString()}.`,
+
+  'sale',
+
+  '/sales.html',
+
+);
+
+
+
+const salesCount =
+  await this.ordersService
+    .getCreatorSalesCount(
+      product.creatorId,
+    );
+
+    const milestones = [
+
+  1,
+  10,
+  20,
+  50,
+  100,
+  250,
+  500,
+  1000,
+
+];
+
+if (
+  milestones.includes(
+    salesCount,
+  )
+) {
+
+  await this.notificationsService
+    .createNotification(
+
+      product.creatorId,
+
+      'Sales Milestone 🚀',
+
+      `Congratulations! You have reached ${salesCount} sales on Vindarr.`,
+
+      'milestone',
+
+    );
+
+}
+
+
+    
     // ADD TO LIBRARY
     if (
       product.type === 'ebook'

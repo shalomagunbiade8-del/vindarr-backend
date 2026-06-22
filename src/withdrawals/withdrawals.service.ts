@@ -9,16 +9,22 @@ import { Repository } from 'typeorm';
 
 import { Withdrawal } from './withdrawal.entity';
 
+import { NotificationsService }
+from '../notifications/notifications.service';
+
 @Injectable()
 export class WithdrawalsService {
 
   constructor(
 
-    @InjectRepository(Withdrawal)
-    private withdrawalRepository:
-      Repository<Withdrawal>,
+  @InjectRepository(Withdrawal)
+  private withdrawalRepository:
+    Repository<Withdrawal>,
 
-  ) {}
+  private notificationsService:
+    NotificationsService,
+
+) {}
 
   async getPendingWithdrawals() {
 
@@ -38,26 +44,45 @@ export class WithdrawalsService {
 
   async markPaid(id: number) {
 
-    const withdrawal =
-      await this.withdrawalRepository.findOne({
-        where: { id },
-      });
+  const withdrawal =
+    await this.withdrawalRepository.findOne({
+      where: { id },
+    });
 
-    if (!withdrawal) {
+  if (!withdrawal) {
 
-      throw new NotFoundException(
-        'Withdrawal not found',
-      );
-
-    }
-
-    withdrawal.status = 'paid';
-
-    return this.withdrawalRepository.save(
-      withdrawal,
+    throw new NotFoundException(
+      'Withdrawal not found',
     );
 
   }
+
+  withdrawal.status = 'paid';
+
+const saved =
+  await this.withdrawalRepository.save(
+    withdrawal,
+  );
+
+await this.notificationsService
+.createNotification(
+
+  withdrawal.userId,
+
+  'Withdrawal Approved 🏦',
+
+  `Your withdrawal of ₦${Number(withdrawal.amount).toLocaleString()} has been approved and paid.`,
+
+  'withdrawal',
+
+  '/wallet.html',
+
+);
+
+return saved;
+
+}
+
 
   async getUserWithdrawals(
   userId: number,

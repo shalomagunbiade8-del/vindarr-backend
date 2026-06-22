@@ -8,11 +8,16 @@ import { WithdrawalsService } from './withdrawals.service';
 
 import { WithdrawalsController } from './withdrawals.controller';
 
+import { NotificationsModule }
+from '../notifications/notifications.module';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Withdrawal,
     ]),
+
+     NotificationsModule,
   ],
 
   providers: [

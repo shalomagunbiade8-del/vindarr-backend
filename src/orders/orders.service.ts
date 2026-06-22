@@ -249,4 +249,23 @@ else {
 
   }
 
+  // Sales count for noteefeecate
+  async getCreatorSalesCount(
+  creatorId: number,
+) {
+
+  return this.orderRepository.count({
+
+    where: {
+
+      creatorId,
+
+      paymentStatus: 'paid',
+
+    },
+
+  });
+
+}
+
 }

@@ -46,4 +46,9 @@ accountName: string;
 @Column({ default: 0 })
 purviewCount: number;
 
+@Column({
+default:true,
+})
+emailNotifications:boolean;
+
 }

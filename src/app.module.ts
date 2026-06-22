@@ -44,6 +44,9 @@ import { WithdrawalsModule } from './withdrawals/withdrawals.module';
 import { Withdrawal } from './withdrawals/withdrawal.entity';
 import { PurviewModule } from './purview/purview.module';
 import { Purview } from './purview/purview.entity';
+import { NotificationsModule } from './notifications/notifications.module';
+import { Notification } from './notifications/notification.entity';
+
 
 
 @Module({
@@ -74,6 +77,7 @@ Story,
 Message,
  Withdrawal,
  Purview,
+ Notification,
     ],
 
     synchronize: true,
@@ -118,6 +122,7 @@ EarningsModule,
 SearchModule,
 WithdrawalsModule,
 PurviewModule,
+NotificationsModule,
 ],
 
   // =====================================

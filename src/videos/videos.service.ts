@@ -152,6 +152,100 @@ async findOne(id: number) {
   };
 }
 
+// =====================================
+// RELATED VIDEOS (UP NEXT)
+// =====================================
+
+async getRelatedVideos(id: number) {
+
+  const currentVideo =
+    await this.videoRepository.findOne({
+      where: { id },
+    });
+
+  if (!currentVideo) {
+    throw new NotFoundException(
+      'Video not found',
+    );
+  }
+
+  const related =
+    await this.videoRepository
+      .createQueryBuilder('video')
+      .leftJoinAndSelect(
+        'video.creator',
+        'creator',
+      )
+
+      // Same category
+      .where(
+        'video.category = :category',
+        {
+          category: currentVideo.category,
+        },
+      )
+
+      // Exclude current video
+      .andWhere(
+        'video.id != :id',
+        {
+          id,
+        },
+      )
+
+      // Most popular first
+      .orderBy(
+        'video.understandCount',
+        'DESC',
+      )
+
+      // Newest as tie breaker
+      .addOrderBy(
+        'video.createdAt',
+        'DESC',
+      )
+
+      .take(10)
+
+      .getMany();
+
+  return related.map(video => ({
+
+    id: video.id,
+
+    title: video.title,
+
+    category: video.category,
+
+    context: video.context,
+
+    type: video.type,
+
+    videoUrl: video.videoUrl,
+
+    fileUrl: video.fileUrl,
+
+    coverUrl: video.coverUrl,
+
+    understandCount:
+      video.understandCount,
+
+    creatorId:
+      video.creatorId,
+
+    creatorUsername:
+      video.creator?.username || 'User',
+
+    creatorAvatar:
+      video.creator?.avatar || null,
+
+    createdAt:
+      video.createdAt,
+
+  }));
+
+}
+
 async getVideosByCreator(creatorId: number){
 
   const videos = await this.videoRepository.find({
@@ -318,3 +412,4 @@ async updateVideo(
 }
 
 }
+

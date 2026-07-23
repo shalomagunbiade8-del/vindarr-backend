@@ -312,6 +312,19 @@ getMyVideos(@Req() req) {
   );
 }
 
+// =====================================
+// RELATED VIDEOS
+// =====================================
+
+@Get(':id/related')
+getRelatedVideos(
+  @Param('id') id: string,
+) {
+  return this.videosService.getRelatedVideos(
+    Number(id),
+  );
+}
+
 
   // =====================================
   // SINGLE CONTENT
@@ -374,3 +387,4 @@ updateVideo(
 }
 
 }
+

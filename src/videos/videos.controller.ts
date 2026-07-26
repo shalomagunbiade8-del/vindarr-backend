@@ -282,11 +282,13 @@ console.log(
   // =====================================
 
   @Get('market')
-  getMarket(
-    @Query('type') type: string,
-  ) {
-    return this.videosService.getMarket(type);
-  }
+async getMarket(
+  @Query('type') type?: string,
+) {
+
+  return this.videosService.getMarket(type);
+
+}
 
   // =====================================
   // USER POSTS

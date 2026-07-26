@@ -358,34 +358,58 @@ async searchVideos(query: string) {
   }));
 } 
 
-async getMarket(type: string) {
+async getMarket(type?: string) {
 
   const query = this.videoRepository
-    .createQueryBuilder('item')
-    .leftJoinAndSelect('item.creator', 'creator')
-    .orderBy('item.createdAt', 'DESC');
+    .createQueryBuilder("item")
+    .leftJoinAndSelect("item.creator", "creator")
+    .leftJoinAndSelect("item.comments", "comments")
+    .orderBy("item.createdAt", "DESC");
 
-  if (type) {
-    query.andWhere('item.type = :type', { type });
+  if (type && type !== "all") {
+    query.andWhere("item.type = :type", { type });
   }
 
   const items = await query.getMany();
 
-  return items.map(item => ({
-    id: item.id,
-    title: item.title,
-    type: item.type,
+  return {
+    data: items.map(item => ({
 
-    videoUrl: item.videoUrl,
-    fileUrl: item.fileUrl,
-    coverUrl: item.coverUrl,
+      id: item.id,
 
-    price: item.price,
+      title: item.title,
 
-    creatorUsername:
-  item.creator?.username || 'User',
-  }));
-} 
+      context: item.context,
+
+      type: item.type,
+
+      videoUrl: item.videoUrl,
+
+      fileUrl: item.fileUrl,
+
+      coverUrl: item.coverUrl,
+
+      price: item.price,
+
+      creatorId: item.creatorId,
+
+      creatorUsername:
+        item.creator?.username || "User",
+
+      creatorAvatar:
+        item.creator?.avatar || null,
+
+      comments:
+        item.comments || [],
+
+      createdAt:
+        item.createdAt,
+
+    }))
+  };
+
+}
+
 
 async updateVideo(
   id: number,

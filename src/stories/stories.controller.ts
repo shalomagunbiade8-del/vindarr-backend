@@ -105,18 +105,20 @@ export class StoriesController {
   // =====================================
 
   @Get()
-  @UseGuards(AuthGuard('jwt'))
-  findAll(
-    @Req() req,
-    @Query('page') page = 1,
-  ) {
+async findAll(
+  @Req() req,
+  @Query('page') page = 1,
+) {
 
-    return this.storiesService.findAll(
-      req.user.userId,
-      Number(page),
-    );
+  const currentUserId =
+    req.user?.userId;
 
-  }
+  return this.storiesService.findAll(
+    currentUserId,
+    Number(page),
+  );
+
+}
 
   // =====================================
   // DELETE STORY
@@ -163,13 +165,13 @@ export class StoriesController {
   // =====================================
 
   @Get('search')
-  search(
-    @Query('q') q: string,
-  ) {
+async search(
+  @Query('q') q: string,
+) {
 
-    return this.storiesService.search(q);
+  return this.storiesService.search(q);
 
-  }
+}
 
   // =====================================
 // ADD COMMENT

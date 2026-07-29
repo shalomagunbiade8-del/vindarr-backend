@@ -108,15 +108,18 @@ export class StoriesController {
 async findAll(
   @Req() req,
   @Query('page') page = 1,
-) {
+  @Query('limit') limit = 6,
+)
+{
 
   const currentUserId =
     req.user?.userId;
 
-  return this.storiesService.findAll(
+ return this.storiesService.findAll(
     currentUserId,
     Number(page),
-  );
+    Number(limit),
+);
 
 }
 

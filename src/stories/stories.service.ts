@@ -59,23 +59,29 @@ private commentRepository: Repository<StoryComment>,
   });
 
   return {
-    data: stories.map(story => ({
-      id: story.id,
-      title: story.title,
-      content: story.content,
-      imageUrl: story.imageUrl,
-      avatar: story.avatar || "https://i.pravatar.cc/150", 
-      createdAt: story.createdAt,
-      author: story.user?.username || "User",
-      username: story.user?.username || "User", 
-      likesCount: story.likedBy?.length || 0,
-      isLiked: currentUserId
-        ? story.likedBy?.includes(currentUserId)
-        : false,
-      userId: story.userId
-    })),
-    total
-  };
+  data: stories.map(story => ({
+    id: story.id,
+    title: story.title,
+    content: story.content,
+    imageUrl: story.imageUrl,
+    avatar: story.avatar || "https://i.pravatar.cc/150",
+    createdAt: story.createdAt,
+    author: story.user?.username || "User",
+    username: story.user?.username || "User",
+    likesCount: story.likedBy?.length || 0,
+    isLiked: currentUserId
+      ? story.likedBy?.includes(currentUserId)
+      : false,
+    userId: story.userId,
+  })),
+
+  total,
+  page,
+  limit,
+
+  hasMore:
+    page * limit < total,
+};
 } 
 
   async deleteStory(id: number, userId: number) {

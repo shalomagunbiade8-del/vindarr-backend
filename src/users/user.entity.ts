@@ -1,7 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 import { OneToMany } from 'typeorm';
 import { Comment } from '../comments/comment.entity'; 
-
+import { Find } from '../find/find.entity';
+import { FindReply } from '../find-reply/find-reply.entity';
 
 
 @Entity()
@@ -50,5 +51,17 @@ purviewCount: number;
 default:true,
 })
 emailNotifications:boolean;
+
+@OneToMany(
+  () => Find,
+  find => find.creator,
+)
+finds: Find[];
+
+@OneToMany(
+  () => FindReply,
+  reply => reply.creator,
+)
+findReply: FindReply[];
 
 }

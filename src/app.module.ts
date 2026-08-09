@@ -46,6 +46,9 @@ import { PurviewModule } from './purview/purview.module';
 import { Purview } from './purview/purview.entity';
 import { NotificationsModule } from './notifications/notifications.module';
 import { Notification } from './notifications/notification.entity';
+import { FindModule } from './find/find.module';
+import { Find} from './find/find.entity';
+
 
 
 
@@ -78,6 +81,7 @@ Message,
  Withdrawal,
  Purview,
  Notification,
+ Find,
     ],
 
     synchronize: true,
@@ -123,6 +127,7 @@ SearchModule,
 WithdrawalsModule,
 PurviewModule,
 NotificationsModule,
+FindModule,
 ],
 
   // =====================================

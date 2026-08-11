@@ -48,6 +48,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { Notification } from './notifications/notification.entity';
 import { FindModule } from './find/find.module';
 import { Find} from './find/find.entity';
+import { PollModule } from './poll/poll.module';
+import { Poll} from './poll/poll.entity';
 
 
 
@@ -82,6 +84,7 @@ Message,
  Purview,
  Notification,
  Find,
+ Poll,
     ],
 
     synchronize: true,
@@ -128,6 +131,7 @@ WithdrawalsModule,
 PurviewModule,
 NotificationsModule,
 FindModule,
+PollModule,
 ],
 
   // =====================================

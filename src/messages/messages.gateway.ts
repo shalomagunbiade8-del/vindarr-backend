@@ -1,17 +1,60 @@
 import {
   WebSocketGateway,
-  WebSocketServer
+  WebSocketServer,
 } from '@nestjs/websockets';
 
-import { Server } from 'socket.io';
+import {
+  Server,
+} from 'socket.io';
 
-@WebSocketGateway({ cors: true })
+
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+})
 export class MessagesGateway {
 
   @WebSocketServer()
   server: Server;
 
-  sendMessage(message: any) {
-    this.server.emit("receiveMessage", message);
+
+  // ==========================================
+  // NEW MESSAGE
+  // ==========================================
+
+  sendMessage(
+    message: any,
+  ) {
+
+    if (!this.server) {
+      return;
+    }
+
+    this.server.emit(
+      'receiveMessage',
+      message,
+    );
+  }
+
+
+  // ==========================================
+  // MESSAGE DELETED
+  // ==========================================
+
+  messageDeleted(
+    messageId: number,
+  ) {
+
+    if (!this.server) {
+      return;
+    }
+
+    this.server.emit(
+      'messageDeleted',
+      {
+        id: messageId,
+      },
+    );
   }
 }

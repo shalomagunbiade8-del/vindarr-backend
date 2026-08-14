@@ -41,19 +41,16 @@ import {
 export class MessagesController {
 
   constructor(
-    private readonly messagesService:
-      MessagesService,
+    private readonly messagesService: MessagesService,
   ) {}
 
 
   // ==========================================
-  // SEND TEXT / ATTACHMENT MESSAGE
+  // SEND MESSAGE
   // ==========================================
 
   @Post()
-  @UseGuards(
-    AuthGuard('jwt'),
-  )
+  @UseGuards(AuthGuard('jwt'))
   async sendMessage(
     @Req() req: any,
     @Body() body: SendMessageDto,
@@ -71,15 +68,10 @@ export class MessagesController {
   // ==========================================
 
   @Get('chat/:username')
-  @UseGuards(
-    AuthGuard('jwt'),
-  )
+  @UseGuards(AuthGuard('jwt'))
   async getChat(
-    @Param('username')
-    username: string,
-
-    @Req()
-    req: any,
+    @Param('username') username: string,
+    @Req() req: any,
   ) {
 
     return this.messagesService.getConversation(
@@ -93,15 +85,10 @@ export class MessagesController {
   // GET CONVERSATION
   // ==========================================
 
-  @Get(
-    'conversation/:user1/:user2',
-  )
+  @Get('conversation/:user1/:user2')
   async getConversation(
-    @Param('user1')
-    user1: string,
-
-    @Param('user2')
-    user2: string,
+    @Param('user1') user1: string,
+    @Param('user2') user2: string,
   ) {
 
     return this.messagesService.getConversation(
@@ -116,15 +103,10 @@ export class MessagesController {
   // ==========================================
 
   @Delete(':id')
-  @UseGuards(
-    AuthGuard('jwt'),
-  )
+  @UseGuards(AuthGuard('jwt'))
   async deleteMessage(
-    @Param('id')
-    id: string,
-
-    @Req()
-    req: any,
+    @Param('id') id: string,
+    @Req() req: any,
   ) {
 
     return this.messagesService.deleteMessage(
@@ -137,101 +119,96 @@ export class MessagesController {
   // ==========================================
   // UPLOAD ATTACHMENT
   //
-  // Supports:
-  // image
+  // IMAGE
+  // VIDEO
   // PDF
-  // video
+  //
+  // MAX SIZE: 25 MB
   // ==========================================
 
   @Post('upload')
-  @UseGuards(
-    AuthGuard('jwt'),
-  )
+  @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(
-    FileInterceptor(
-      'file',
-      {
-        storage:
-          diskStorage({
+    FileInterceptor('file', {
 
-            destination:
-              './uploads',
+      storage: diskStorage({
 
-            filename:
-              (
-                req,
-                file,
-                callback,
-              ) => {
+        destination: './uploads',
 
-                const uniqueName =
-                  `${Date.now()}-${Math.round(
-                    Math.random() * 1e9,
-                  )}${extname(
-                    file.originalname,
-                  )}`;
+        filename: (
+          req,
+          file,
+          callback,
+        ) => {
 
-                callback(
-                  null,
-                  uniqueName,
-                );
-              },
+          const extension =
+            extname(file.originalname);
 
-          }),
+          const uniqueName =
+            `${Date.now()}-${Math.round(
+              Math.random() * 1e9,
+            )}${extension}`;
 
-        limits: {
-
-          /*
-           * Increase this if you want
-           * longer video notes.
-           */
-
-          fileSize:
-            25 * 1024 * 1024,
-
+          callback(
+            null,
+            uniqueName,
+          );
         },
 
-        fileFilter:
-          (
-            req,
-            file,
-            callback,
-          ) => {
+      }),
 
-            const allowed =
-              file.mimetype.startsWith(
-                'image/',
-              )
-              ||
-              file.mimetype.startsWith(
-                'video/',
-              )
-              ||
-              file.mimetype ===
-                'application/pdf';
+      limits: {
+        fileSize:
+          25 * 1024 * 1024,
+      },
 
+      fileFilter: (
+        req,
+        file,
+        callback,
+      ) => {
 
-            if (!allowed) {
+        const isImage =
+          file.mimetype.startsWith(
+            'image/',
+          );
 
-              return callback(
-                new BadRequestException(
-                  'Only images, videos and PDFs are allowed.',
-                ),
-                false,
-              );
+        const isVideo =
+          file.mimetype.startsWith(
+            'video/',
+          );
 
-            }
+        const isPdf =
+          file.mimetype ===
+          'application/pdf';
 
 
-            callback(
-              null,
-              true,
-            );
+        const allowed =
+          isImage ||
+          isVideo ||
+          isPdf;
 
-          },
+
+        if (!allowed) {
+
+          return callback(
+            new BadRequestException(
+              'Only images, videos and PDFs are allowed.',
+            ),
+            false,
+          );
+
+        }
+
+
+        callback(
+          null,
+          true,
+        );
 
       },
-    ),
+
+    }),
   )
   async uploadFile(
     @UploadedFile()
@@ -262,6 +239,7 @@ export class MessagesController {
         file.size,
 
     };
+
   }
 
 
@@ -270,16 +248,15 @@ export class MessagesController {
   // ==========================================
 
   @Get('inbox')
-  @UseGuards(
-    AuthGuard('jwt'),
-  )
+  @UseGuards(AuthGuard('jwt'))
   async getInbox(
-    @Req()
-    req: any,
+    @Req() req: any,
   ) {
 
     return this.messagesService.getInbox(
       req.user.username,
     );
+
   }
+
 }

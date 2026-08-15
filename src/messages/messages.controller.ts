@@ -20,13 +20,9 @@ import {
   AuthGuard,
 } from '@nestjs/passport';
 
-import {
-  diskStorage,
-} from 'multer';
+import cloudinary from '../config/cloudinary';
 
-import {
-  extname,
-} from 'path';
+import * as streamifier from 'streamifier';
 
 import {
   MessagesService,
@@ -60,6 +56,7 @@ export class MessagesController {
       body,
       req.user,
     );
+
   }
 
 
@@ -78,6 +75,7 @@ export class MessagesController {
       req.user.username,
       username,
     );
+
   }
 
 
@@ -95,6 +93,7 @@ export class MessagesController {
       user1,
       user2,
     );
+
   }
 
 
@@ -113,49 +112,28 @@ export class MessagesController {
       Number(id),
       req.user,
     );
+
   }
 
 
   // ==========================================
-  // UPLOAD ATTACHMENT
+  // UPLOAD MESSAGE ATTACHMENT
   //
   // IMAGE
   // VIDEO
   // PDF
   //
   // MAX SIZE: 25 MB
+  //
+  // IMPORTANT:
+  // Files are uploaded directly to Cloudinary.
+  // Nothing is stored on Render's local filesystem.
   // ==========================================
 
   @Post('upload')
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(
     FileInterceptor('file', {
-
-      storage: diskStorage({
-
-        destination: './uploads',
-
-        filename: (
-          req,
-          file,
-          callback,
-        ) => {
-
-          const extension =
-            extname(file.originalname);
-
-          const uniqueName =
-            `${Date.now()}-${Math.round(
-              Math.random() * 1e9,
-            )}${extension}`;
-
-          callback(
-            null,
-            uniqueName,
-          );
-        },
-
-      }),
 
       limits: {
         fileSize:
@@ -224,10 +202,82 @@ export class MessagesController {
     }
 
 
+    // ========================================
+    // UPLOAD BUFFER TO CLOUDINARY
+    // ========================================
+
+    const uploadResult =
+      await new Promise<any>(
+        (resolve, reject) => {
+
+          const uploadStream =
+            cloudinary.uploader.upload_stream(
+              {
+                resource_type: 'auto',
+
+                folder:
+                  'vindarr_message_attachments',
+
+              },
+
+              (
+                error,
+                result,
+              ) => {
+
+                if (error) {
+
+                  return reject(
+                    error,
+                  );
+
+                }
+
+
+                resolve(
+                  result,
+                );
+
+              },
+
+            );
+
+
+          streamifier
+            .createReadStream(
+              file.buffer,
+            )
+            .pipe(
+              uploadStream,
+            );
+
+        },
+      );
+
+
+    // ========================================
+    // CLOUDINARY MUST RETURN A SECURE URL
+    // ========================================
+
+    if (
+      !uploadResult?.secure_url
+    ) {
+
+      throw new BadRequestException(
+        'Cloudinary did not return a secure URL.',
+      );
+
+    }
+
+
+    // ========================================
+    // RETURN PERMANENT URL TO FRONTEND
+    // ========================================
+
     return {
 
       url:
-        `/uploads/${file.filename}`,
+        uploadResult.secure_url,
 
       type:
         file.mimetype,
@@ -237,6 +287,12 @@ export class MessagesController {
 
       size:
         file.size,
+
+      publicId:
+        uploadResult.public_id,
+
+      resourceType:
+        uploadResult.resource_type,
 
     };
 

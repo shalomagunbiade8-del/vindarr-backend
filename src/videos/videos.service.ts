@@ -73,8 +73,9 @@ return this.videoRepository.findOne({
         'comments.author',
       ],
       order: {
-        createdAt: 'DESC',
-      },
+  createdAt: 'DESC',
+  id: 'DESC',
+},
       skip,
       take: limit,
     });

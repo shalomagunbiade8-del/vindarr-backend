@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn,  CreateDateColumn, } from 'typeorm';
 import { OneToMany } from 'typeorm';
 import { Comment } from '../comments/comment.entity'; 
 import { Find } from '../find/find.entity';
@@ -30,6 +30,9 @@ bio: string;
 
 @Column({ default: 0 })
   totalUnderstand: number;
+
+  @CreateDateColumn()
+createdAt: Date;
 
   @OneToMany(() => Comment, comment => comment.author)
 comments: Comment[]; 

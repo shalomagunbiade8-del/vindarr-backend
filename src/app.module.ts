@@ -50,6 +50,7 @@ import { FindModule } from './find/find.module';
 import { Find} from './find/find.entity';
 import { PollModule } from './poll/poll.module';
 import { Poll} from './poll/poll.entity';
+import { AdminModule } from './admin/admin.module';
 
 
 
@@ -132,6 +133,7 @@ PurviewModule,
 NotificationsModule,
 FindModule,
 PollModule,
+AdminModule,
 ],
 
   // =====================================

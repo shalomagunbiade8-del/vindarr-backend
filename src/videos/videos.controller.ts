@@ -9,384 +9,446 @@ import {
   Query,
   UseGuards,
   Req,
-  UseInterceptors,
-  UploadedFiles,
   BadRequestException,
 } from '@nestjs/common';
 
-import { AuthGuard } from '@nestjs/passport';
+import {
+  AuthGuard,
+} from '@nestjs/passport';
 
-import { VideosService } from './videos.service';
+import {
+  VideosService,
+} from './videos.service';
 
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
-
-import { v2 as cloudinary } from 'cloudinary';
-import * as streamifier from 'streamifier';
-
-import { diskStorage } from 'multer';
-
-import * as fs from 'fs';
-
-import { promisify } from 'util';
-
-import * as path from 'path';
-
-if (!fs.existsSync('./uploads')) {
-  fs.mkdirSync('./uploads', { recursive: true });
-}
 
 @Controller('videos')
 export class VideosController {
+
   constructor(
-    private readonly videosService: VideosService,
+    private readonly videosService:
+      VideosService,
   ) {}
 
-  // =====================================
-  // UPLOAD CONTENT
-  // =====================================
 
+  // ==========================================
+  // CREATE CONTENT
+  //
+  // POST /videos
+  //
+  // IMPORTANT:
+  // This endpoint now receives JSON only.
+  //
+  // The actual media has already been uploaded
+  // directly from the browser to Cloudinary.
+  // ==========================================
+
+  @UseGuards(
+    AuthGuard('jwt'),
+  )
   @Post()
-  @UseGuards(AuthGuard('jwt'))
- @UseInterceptors(
-  FileFieldsInterceptor(
-    [
-      { name: 'file', maxCount: 1 },
-      { name: 'cover', maxCount: 1 },
-    ],
-    {
-      storage: diskStorage({
-  destination: path.join(process.cwd(), 'uploads'),
-}),
-
-      limits: {
-        fileSize: 1024 * 1024 * 50,
-      },
-    },
-  ),
-)
-
-
-  async uploadContent(
-    @UploadedFiles()
-    files: {
-      file?: any[];
-      cover?: any[];
-    },
-
+  async createContent(
     @Body() body: any,
-    @Req() req,
+    @Req() req: any,
   ) {
-    const { type } = body;
 
-    const file = files?.file?.[0];
+    const type =
+      String(
+        body?.type || '',
+      ).trim();
 
-    console.log('BODY:', body);
-
-console.log('FILE:', {
-  originalname: file?.originalname,
-  mimetype: file?.mimetype,
-  size: file?.size,
-  path: file?.path,
-});
-
-    const cover = files?.cover?.[0];
 
     if (!type) {
+
       throw new BadRequestException(
         'Type is required',
       );
+
     }
 
-    let fileUrl: string | null = null;
-    let coverUrl: string | null = null;
-    let videoUrl: string | null = null;
 
-    // =====================================
-    // VIDEO
-    // =====================================
+    const allowedTypes = [
+      'video',
+      'ebook',
+      'fashion',
+      'essential',
+    ];
 
-    if (type === 'video') {
-      if (!file) {
-        throw new BadRequestException(
-          'Video file required',
-        );
-      }
-
-      videoUrl = await this.uploadToCloudinary(
-        file,
-        'video',
-        'vindarr_videos',
-      );
-    }
-
-    // =====================================
-    // EBOOK
-    // =====================================
-
-    if (type === 'ebook') {
-
-  if (!file) {
-    throw new BadRequestException(
-      'PDF required',
-    );
-  }
-
-  fileUrl =
-    await this.uploadToCloudinary(
-
-      file,
-      'raw',
-      'vindarr_ebooks',
-    );
-
-    console.log(
-  "UPLOAD RETURNED:",
-  fileUrl,
-);
-
-  console.log(
-    'PDF URL SAVED:',
-    fileUrl,
-  );
-
-  if (cover) {
-
-    coverUrl =
-      await this.uploadToCloudinary(
-        cover,
-        'image',
-        'vindarr_covers',
-      );
-
-  }
-
-}
-
-    // =====================================
-    // FASHION
-    // =====================================
 
     if (
-  type === 'fashion' ||
-  type === 'essential'
-) {
+      !allowedTypes.includes(
+        type,
+      )
+    ) {
 
-  if (!file) {
-    throw new BadRequestException(
-      'Image/video required',
-    );
-  }
+      throw new BadRequestException(
+        'Invalid content type',
+      );
 
-  fileUrl =
-    await this.uploadToCloudinary(
-      file,
-      'auto',
-      type === 'fashion'
-        ? 'vindarr_fashion'
-        : 'vindarr_essentials',
-    );
+    }
 
-}
 
-    console.log('PRICE RECEIVED:', body.price);
+    const title =
+      String(
+        body?.title || '',
+      ).trim();
+
+
+    const context =
+      String(
+        body?.context || '',
+      ).trim();
+
+
+    const category =
+      String(
+        body?.category || '',
+      ).trim();
+
+
+    if (!title) {
+
+      throw new BadRequestException(
+        'Title is required',
+      );
+
+    }
+
+
+    if (!context) {
+
+      throw new BadRequestException(
+        'Description is required',
+      );
+
+    }
+
+
+    if (!category) {
+
+      throw new BadRequestException(
+        'Category is required',
+      );
+
+    }
+
+
+    // ----------------------------------------
+    // VIDEO MUST HAVE videoUrl
+    // ----------------------------------------
+
+    if (
+      type === 'video' &&
+      !body.videoUrl
+    ) {
+
+      throw new BadRequestException(
+        'Uploaded video URL is required',
+      );
+
+    }
+
+
+    // ----------------------------------------
+    // EBOOK MUST HAVE fileUrl + coverUrl
+    // ----------------------------------------
+
+    if (
+      type === 'ebook' &&
+      !body.fileUrl
+    ) {
+
+      throw new BadRequestException(
+        'Uploaded ebook URL is required',
+      );
+
+    }
+
+
+    if (
+      type === 'ebook' &&
+      !body.coverUrl
+    ) {
+
+      throw new BadRequestException(
+        'Uploaded ebook cover URL is required',
+      );
+
+    }
+
+
+    // ----------------------------------------
+    // PRODUCTS
+    // ----------------------------------------
+
+    if (
+      (
+        type === 'fashion' ||
+        type === 'essential'
+      ) &&
+      !body.fileUrl
+    ) {
+
+      throw new BadRequestException(
+        'Uploaded product media URL is required',
+      );
+
+    }
+
 
     return this.videosService.create(
+
       {
-        ...body,
+
+        title,
+
+        context,
+
+        category,
+
         type,
 
-        videoUrl,
-        fileUrl,
-        coverUrl,
+        videoUrl:
+          body.videoUrl || null,
+
+        fileUrl:
+          body.fileUrl || null,
+
+        coverUrl:
+          body.coverUrl || null,
 
         price:
-  body.price &&
-  !isNaN(Number(String(body.price).replace(/,/g, '')))
-    ? Number(String(body.price).replace(/,/g, ''))
-    : 0,
+          body.price ?? 0,
+
       },
+
       req.user.userId,
+
     );
+
   }
 
-  // =====================================
-  // CLOUDINARY UPLOAD
-  // =====================================
 
- private async uploadToCloudinary(
-  file,
-  resource_type,
-  folder,
-) {
-
-  console.log('FILE PATH:', file.path);
-console.log('RESOURCE TYPE:', resource_type);
-console.log('FOLDER:', folder);
-
-const uploadResult =
-  await cloudinary.uploader.upload(
-    file.path,
-    {
-      resource_type,
-      folder,
-
-      use_filename: true,
-      unique_filename: false,
-    },
-  );
-
-console.log('CLOUDINARY RESULT:', uploadResult.secure_url);
-
-console.log(
-  'CLOUDINARY FULL RESULT:',
-  JSON.stringify(uploadResult, null, 2)
-);
-
-  // DELETE TEMP FILE
-  fs.unlinkSync(file.path);
-
-  return uploadResult.secure_url;
-
-}
-
-  // =====================================
+  // ==========================================
   // GET ALL VIDEOS
-  // =====================================
+  // ==========================================
 
   @Get()
   findAll(
-    @Query('page') page: number = 1,
-    @Query('limit') limit: number = 10,
+    @Query('page')
+    page: number = 1,
+
+    @Query('limit')
+    limit: number = 10,
   ) {
+
     return this.videosService.findAll(
+
       Number(page),
+
       Number(limit),
+
     );
+
   }
 
-  // =====================================
+
+  // ==========================================
   // SEARCH
-  // =====================================
+  // ==========================================
 
   @Get('search')
   searchVideos(
-    @Query('q') query: string,
+    @Query('q')
+    query: string,
   ) {
+
     return this.videosService.searchVideos(
       query,
     );
+
   }
 
-  // =====================================
+
+  // ==========================================
   // MARKET
-  // =====================================
+  // ==========================================
 
   @Get('market')
-async getMarket(
-  @Query('type') type?: string,
-) {
+  async getMarket(
+    @Query('type')
+    type?: string,
+  ) {
 
-  return this.videosService.getMarket(type);
+    return this.videosService.getMarket(
+      type,
+    );
 
-}
+  }
 
-  // =====================================
+
+  // ==========================================
   // USER POSTS
   // IMPORTANT:
   // MUST COME BEFORE :id
-  // =====================================
+  // ==========================================
 
   @Get('user/:creatorId')
   getVideosByCreator(
-    @Param('creatorId') creatorId: string,
+    @Param('creatorId')
+    creatorId: string,
   ) {
-    return this.videosService.getVideosByCreator(
-      Number(creatorId),
-    );
+
+    return this.videosService
+      .getVideosByCreator(
+        Number(creatorId),
+      );
+
   }
 
-  // Get videos for creator dashboard
-@UseGuards(AuthGuard('jwt'))
-@Get('me')
-getMyVideos(@Req() req) {
-  return this.videosService.getVideosByCreator(
-    req.user.userId,
-  );
-}
 
-// =====================================
-// RELATED VIDEOS
-// =====================================
+  // ==========================================
+  // MY CONTENT
+  // ==========================================
 
-@Get(':id/related')
-getRelatedVideos(
-  @Param('id') id: string,
-) {
-  return this.videosService.getRelatedVideos(
-    Number(id),
-  );
-}
+  @UseGuards(
+    AuthGuard('jwt'),
+  )
+  @Get('me')
+  getMyVideos(
+    @Req() req: any,
+  ) {
+
+    return this.videosService
+      .getVideosByCreator(
+        req.user.userId,
+      );
+
+  }
 
 
-  // =====================================
+  // ==========================================
+  // RELATED
+  // ==========================================
+
+  @Get(':id/related')
+  getRelatedVideos(
+    @Param('id')
+    id: string,
+  ) {
+
+    return this.videosService
+      .getRelatedVideos(
+        Number(id),
+      );
+
+  }
+
+
+  // ==========================================
   // SINGLE CONTENT
-  // IMPORTANT:
-  // KEEP THIS BELOW search/market/user
-  // =====================================
+  // ==========================================
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(
+    @Param('id')
+    id: string,
+  ) {
+
     return this.videosService.findOne(
       Number(id),
     );
+
   }
 
-  // =====================================
-  // DELETE
-  // =====================================
 
-  @UseGuards(AuthGuard('jwt'))
+  // ==========================================
+  // DELETE
+  // ==========================================
+
+  @UseGuards(
+    AuthGuard('jwt'),
+  )
   @Delete(':id')
   deleteVideo(
-    @Param('id') id: string,
-    @Req() req,
+    @Param('id')
+    id: string,
+
+    @Req()
+    req: any,
   ) {
+
     return this.videosService.deleteVideo(
+
       Number(id),
+
       req.user.userId,
+
     );
+
   }
 
-  // =====================================
-  // UNDERSTAND
-  // =====================================
 
-  @UseGuards(AuthGuard('jwt'))
+  // ==========================================
+  // UNDERSTAND
+  // ==========================================
+
+  @UseGuards(
+    AuthGuard('jwt'),
+  )
   @Post(':id/understand')
   pressUnderstand(
-    @Param('id') id: string,
-    @Req() req,
+    @Param('id')
+    id: string,
+
+    @Req()
+    req: any,
   ) {
-    return this.videosService.pressUnderstand(
-      Number(id),
-      req.user.userId,
-    );
+
+    return this.videosService
+      .pressUnderstand(
+
+        Number(id),
+
+        req.user.userId,
+
+      );
+
   }
 
-  
-@UseGuards(AuthGuard('jwt'))
-@Patch(':id')
-updateVideo(
-  @Param('id') id: string,
-  @Body() body: any,
-  @Req() req,
-) {
-  return this.videosService.updateVideo(
-    Number(id),
-    body,
-    req.user.userId,
-  );
-}
+
+  // ==========================================
+  // UPDATE
+  //
+  // PATCH /videos/:id
+  //
+  // Receives JSON.
+  // ==========================================
+
+  @UseGuards(
+    AuthGuard('jwt'),
+  )
+  @Patch(':id')
+  updateVideo(
+    @Param('id')
+    id: string,
+
+    @Body()
+    body: any,
+
+    @Req()
+    req: any,
+  ) {
+
+    return this.videosService.updateVideo(
+
+      Number(id),
+
+      body,
+
+      req.user.userId,
+
+    );
+
+  }
 
 }
-

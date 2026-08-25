@@ -51,6 +51,7 @@ import { Find} from './find/find.entity';
 import { PollModule } from './poll/poll.module';
 import { Poll} from './poll/poll.entity';
 import { AdminModule } from './admin/admin.module';
+import { CloudinarySignatureModule } from './cloudinary-signature/cloudinary-signature.module';
 
 
 
@@ -134,6 +135,7 @@ NotificationsModule,
 FindModule,
 PollModule,
 AdminModule,
+CloudinarySignatureModule,
 ],
 
   // =====================================

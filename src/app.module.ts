@@ -52,6 +52,12 @@ import { PollModule } from './poll/poll.module';
 import { Poll} from './poll/poll.entity';
 import { AdminModule } from './admin/admin.module';
 import { CloudinarySignatureModule } from './cloudinary-signature/cloudinary-signature.module';
+import { SavedModule } from './saved/saved.module';
+import { CollectionsModule } from './collections/collections.module';
+
+import { Saved} from './saved/saved.entity';
+import { Collection} from './collections/collection.entity';
+
 
 
 
@@ -87,6 +93,8 @@ Message,
  Notification,
  Find,
  Poll,
+ Saved,
+ Collection,
     ],
 
     synchronize: true,
@@ -136,6 +144,8 @@ FindModule,
 PollModule,
 AdminModule,
 CloudinarySignatureModule,
+SavedModule,
+CollectionsModule,
 ],
 
   // =====================================

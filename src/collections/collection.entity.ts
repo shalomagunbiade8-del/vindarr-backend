@@ -30,10 +30,10 @@ export class Collection {
 
 
   @Column({
-    nullable: true,
-  })
-  coverUrl: string | null;
-
+  type: 'text',
+  nullable: true,
+})
+coverUrl: string | null;
 
   @ManyToOne(
     () => User,

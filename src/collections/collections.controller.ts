@@ -17,9 +17,6 @@ import { CollectionsService } from './collections.service';
 
 
 @Controller('collections')
-@UseGuards(
-  AuthGuard('jwt'),
-)
 export class CollectionsController {
 
   constructor(
@@ -29,10 +26,28 @@ export class CollectionsController {
 
 
   /* =======================================================
-     ALL COLLECTIONS
+     PUBLIC SHARED COLLECTION
+  ======================================================= */
+
+  @Get('shared/:shareToken')
+  getSharedCollection(
+    @Param('shareToken')
+    shareToken: string,
+  ) {
+
+    return this.collectionsService.findShared(
+      shareToken,
+    );
+
+  }
+
+
+  /* =======================================================
+     AUTHENTICATED ROUTES
   ======================================================= */
 
   @Get()
+  @UseGuards(AuthGuard('jwt'))
   findAll(
     @Req() req,
   ) {
@@ -49,6 +64,7 @@ export class CollectionsController {
   ======================================================= */
 
   @Get(':id')
+  @UseGuards(AuthGuard('jwt'))
   findOne(
     @Req() req,
 
@@ -72,6 +88,7 @@ export class CollectionsController {
   ======================================================= */
 
   @Post()
+  @UseGuards(AuthGuard('jwt'))
   create(
     @Req() req,
 
@@ -94,6 +111,7 @@ export class CollectionsController {
   ======================================================= */
 
   @Post(':id/items')
+  @UseGuards(AuthGuard('jwt'))
   addItem(
     @Req() req,
 
@@ -112,9 +130,7 @@ export class CollectionsController {
     return this.collectionsService.addItem(
       req.user.userId,
       id,
-      Number(
-        body.savedItemId,
-      ),
+      Number(body.savedItemId),
     );
 
   }
@@ -125,6 +141,7 @@ export class CollectionsController {
   ======================================================= */
 
   @Patch(':id/reorder')
+  @UseGuards(AuthGuard('jwt'))
   reorder(
     @Req() req,
 
@@ -154,6 +171,7 @@ export class CollectionsController {
   ======================================================= */
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'))
   remove(
     @Req() req,
 
@@ -177,6 +195,7 @@ export class CollectionsController {
   ======================================================= */
 
   @Delete('items/:itemId')
+  @UseGuards(AuthGuard('jwt'))
   removeItem(
     @Req() req,
 

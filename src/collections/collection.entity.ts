@@ -7,12 +7,15 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 
 import { User } from '../users/user.entity';
 import { CollectionItem } from './collection-item.entity';
 
+
 @Entity('collections')
+@Unique(['shareToken'])
 export class Collection {
 
   @PrimaryGeneratedColumn()
@@ -30,10 +33,27 @@ export class Collection {
 
 
   @Column({
-  type: 'text',
-  nullable: true,
-})
-coverUrl: string | null;
+    type: 'text',
+    nullable: true,
+  })
+  coverUrl: string | null;
+
+
+  /*
+   * Public identifier used when someone shares
+   * a collection.
+   *
+   * Do NOT expose the database ID as the public
+   * share identifier.
+   */
+
+  @Column({
+    type: 'varchar',
+    length: 48,
+    nullable: true,
+  })
+  shareToken: string | null;
+
 
   @ManyToOne(
     () => User,

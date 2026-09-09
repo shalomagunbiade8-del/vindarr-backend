@@ -10,10 +10,12 @@ import {
 import { Collection } from './collection.entity';
 import { Saved } from '../saved/saved.entity';
 
+
 @Entity('collection_items')
-@Unique(
-  ['collectionId', 'savedItemId'],
-)
+@Unique([
+  'collectionId',
+  'savedItemId',
+])
 export class CollectionItem {
 
   @PrimaryGeneratedColumn()

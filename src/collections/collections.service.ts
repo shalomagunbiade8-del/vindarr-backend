@@ -11,8 +11,9 @@ import {
 
 import {
   Repository,
-  In,
 } from 'typeorm';
+
+import { randomBytes } from 'crypto';
 
 import { Collection } from './collection.entity';
 import { CollectionItem } from './collection-item.entity';
@@ -54,31 +55,33 @@ export class CollectionsService {
   ) {
 
     const cleanName =
-      String(
-        name || '',
-      ).trim();
+      String(name || '').trim();
 
 
     if (!cleanName) {
-
       throw new BadRequestException(
         'Collection name is required.',
       );
-
     }
+
+
+    if (cleanName.length > 80) {
+      throw new BadRequestException(
+        'Collection name must be 80 characters or less.',
+      );
+    }
+
+
+    const shareToken =
+      this.generateShareToken();
 
 
     const collection =
       this.collectionRepository.create({
-
         userId,
-
-        name:
-          cleanName,
-
-        coverUrl:
-          null,
-
+        name: cleanName,
+        coverUrl: null,
+        shareToken,
       });
 
 
@@ -90,17 +93,10 @@ export class CollectionsService {
 
     return {
       data: {
-
         ...saved,
-
-        itemCount:
-          0,
-
-        items:
-          [],
-
+        itemCount: 0,
+        items: [],
       },
-
     };
 
   }
@@ -128,23 +124,17 @@ export class CollectionsService {
         ],
 
         order: {
-          updatedAt:
-            'DESC',
+          updatedAt: 'DESC',
         },
 
       });
 
 
     return {
-
-      data:
-        collections.map(
-          collection =>
-            this.formatCollection(
-              collection,
-            ),
-        ),
-
+      data: collections.map(
+        collection =>
+          this.formatCollection(collection),
+      ),
     };
 
   }
@@ -163,51 +153,40 @@ export class CollectionsService {
       await this.collectionRepository.findOne({
 
         where: {
-          id:
-            collectionId,
-
+          id: collectionId,
           userId,
         },
 
         relations: [
-
           'items',
-
           'items.savedItem',
-
           'items.savedItem.content',
-
           'items.savedItem.content.creator',
-
         ],
 
       });
 
 
     if (!collection) {
-
       throw new NotFoundException(
         'Collection not found.',
       );
-
     }
 
 
     collection.items =
-      collection.items.sort(
-        (a,b) =>
-          a.position -
-          b.position,
+      (collection.items || []).sort(
+        (a, b) =>
+          Number(a.position) -
+          Number(b.position),
       );
 
 
     return {
-
       data:
         this.formatCollection(
           collection,
         ),
-
     };
 
   }
@@ -223,13 +202,28 @@ export class CollectionsService {
     savedItemId: number,
   ) {
 
+    const numericCollectionId =
+      Number(collectionId);
+
+    const numericSavedItemId =
+      Number(savedItemId);
+
+
+    if (
+      !numericCollectionId ||
+      !numericSavedItemId
+    ) {
+      throw new BadRequestException(
+        'Invalid collection or saved item.',
+      );
+    }
+
+
     const collection =
       await this.collectionRepository.findOne({
 
         where: {
-          id:
-            collectionId,
-
+          id: numericCollectionId,
           userId,
         },
 
@@ -241,11 +235,9 @@ export class CollectionsService {
 
 
     if (!collection) {
-
       throw new NotFoundException(
         'Collection not found.',
       );
-
     }
 
 
@@ -253,9 +245,7 @@ export class CollectionsService {
       await this.savedRepository.findOne({
 
         where: {
-          id:
-            savedItemId,
-
+          id: numericSavedItemId,
           userId,
         },
 
@@ -263,11 +253,9 @@ export class CollectionsService {
 
 
     if (!saved) {
-
       throw new NotFoundException(
         'Saved item not found.',
       );
-
     }
 
 
@@ -275,53 +263,55 @@ export class CollectionsService {
       await this.collectionItemRepository.findOne({
 
         where: {
+          collectionId:
+            numericCollectionId,
 
-          collectionId,
-
-          savedItemId,
-
+          savedItemId:
+            numericSavedItemId,
         },
 
       });
 
 
+    /*
+     * Do NOT update the streak if this item was already
+     * inside the collection.
+     */
+
     if (existing) {
 
       return {
-
-        data:
-          existing,
-
-        alreadyAdded:
-          true,
-
+        data: existing,
+        alreadyAdded: true,
       };
 
     }
 
 
-    const max =
-      collection.items?.length
-        ? Math.max(
-            ...collection.items.map(
-              item =>
-                Number(
-                  item.position,
-                ),
-            ),
-          )
+    const positions =
+      (collection.items || []).map(
+        item =>
+          Number(item.position),
+      );
+
+
+    const maxPosition =
+      positions.length
+        ? Math.max(...positions)
         : -1;
 
 
     const item =
       this.collectionItemRepository.create({
 
-        collectionId,
+        collectionId:
+          numericCollectionId,
 
-        savedItemId,
+        savedItemId:
+          numericSavedItemId,
 
         position:
-          max + 1,
+          maxPosition + 1,
 
       });
 
@@ -333,15 +323,22 @@ export class CollectionsService {
 
 
     await this.updateCollectionCover(
-      collectionId,
-      savedItemId,
+      numericCollectionId,
+      numericSavedItemId,
     );
 
 
     await this.touchCollection(
-      collectionId,
+      numericCollectionId,
     );
 
+
+    /*
+     * THIS is the collection activity.
+     *
+     * Opening, viewing, removing, or reordering does
+     * not count as collection activity.
+     */
 
     await this.updateCollectionStreak(
       userId,
@@ -349,13 +346,8 @@ export class CollectionsService {
 
 
     return {
-
-      data:
-        result,
-
-      alreadyAdded:
-        false,
-
+      data: result,
+      alreadyAdded: false,
     };
 
   }
@@ -374,8 +366,7 @@ export class CollectionsService {
       await this.collectionItemRepository.findOne({
 
         where: {
-          id:
-            collectionItemId,
+          id: Number(collectionItemId),
         },
 
         relations: [
@@ -386,28 +377,76 @@ export class CollectionsService {
 
 
     if (!item) {
-
       throw new NotFoundException(
         'Collection item not found.',
       );
-
     }
 
 
     if (
-      item.collection.userId !==
-      userId
+      item.collection.userId !== userId
     ) {
-
       throw new ForbiddenException(
         'You cannot modify this collection.',
       );
-
     }
 
 
     await this.collectionItemRepository.remove(
       item,
+    );
+
+
+    /*
+     * Recalculate positions after removal.
+     */
+
+    const remaining =
+      await this.collectionItemRepository.find({
+
+        where: {
+          collectionId:
+            item.collectionId,
+        },
+
+        order: {
+          position: 'ASC',
+        },
+
+      });
+
+
+    for (
+      let index = 0;
+      index < remaining.length;
+      index++
+    ) {
+
+      if (
+        remaining[index].position !== index
+      ) {
+
+        await this.collectionItemRepository.update(
+
+          {
+            id:
+              remaining[index].id,
+          },
+
+          {
+            position:
+              index,
+          },
+
+        );
+
+      }
+
+    }
+
+
+    await this.rebuildCollectionCover(
+      item.collectionId,
     );
 
 
@@ -434,14 +473,10 @@ export class CollectionsService {
     itemIds: number[],
   ) {
 
-    if (
-      !Array.isArray(itemIds)
-    ) {
-
+    if (!Array.isArray(itemIds)) {
       throw new BadRequestException(
         'itemIds must be an array.',
       );
-
     }
 
 
@@ -449,9 +484,7 @@ export class CollectionsService {
       await this.collectionRepository.findOne({
 
         where: {
-          id:
-            collectionId,
-
+          id: Number(collectionId),
           userId,
         },
 
@@ -459,11 +492,9 @@ export class CollectionsService {
 
 
     if (!collection) {
-
       throw new NotFoundException(
         'Collection not found.',
       );
-
     }
 
 
@@ -471,35 +502,62 @@ export class CollectionsService {
       await this.collectionItemRepository.find({
 
         where: {
-          collectionId,
+          collectionId:
+            Number(collectionId),
         },
 
       });
 
 
-    const existingIds =
-      new Set(
-        items.map(
-          item =>
-            Number(item.id),
-        ),
-      );
-
-
     const incomingIds =
       itemIds.map(
-        id =>
-          Number(id),
+        id => Number(id),
       );
+
+
+    const existingIds =
+      items.map(
+        item => Number(item.id),
+      );
+
+
+    /*
+     * The frontend must send EVERY item.
+     */
+
+    if (
+      incomingIds.length !==
+      existingIds.length
+    ) {
+
+      throw new BadRequestException(
+        'All collection items must be included when reordering.',
+      );
+
+    }
+
+
+    const uniqueIncoming =
+      new Set(incomingIds);
+
+
+    if (
+      uniqueIncoming.size !==
+      existingIds.length
+    ) {
+
+      throw new BadRequestException(
+        'Duplicate collection item IDs are not allowed.',
+      );
+
+    }
 
 
     for (
       const id of incomingIds
     ) {
 
-      if (
-        !existingIds.has(id)
-      ) {
+      if (!existingIds.includes(id)) {
 
         throw new BadRequestException(
           'Invalid collection item.',
@@ -522,8 +580,8 @@ export class CollectionsService {
           id:
             incomingIds[index],
 
-          collectionId,
-
+          collectionId:
+            Number(collectionId),
         },
 
         {
@@ -537,7 +595,7 @@ export class CollectionsService {
 
 
     await this.touchCollection(
-      collectionId,
+      Number(collectionId),
     );
 
 
@@ -562,9 +620,7 @@ export class CollectionsService {
       await this.collectionRepository.findOne({
 
         where: {
-          id:
-            collectionId,
-
+          id: Number(collectionId),
           userId,
         },
 
@@ -572,11 +628,9 @@ export class CollectionsService {
 
 
     if (!collection) {
-
       throw new NotFoundException(
         'Collection not found.',
       );
-
     }
 
 
@@ -594,7 +648,73 @@ export class CollectionsService {
 
 
   /* =======================================================
-     STREAK
+     GET / VALIDATE COLLECTION STREAK
+  ======================================================= */
+
+  async getCollectionStreak(
+    userId: number,
+  ) {
+
+    const streak =
+      await this.collectionStreakRepository.findOne({
+
+        where: {
+          userId,
+        },
+
+      });
+
+
+    if (!streak) {
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        lastCollectionDate: null,
+      };
+    }
+
+
+    const today =
+      this.dateOnly();
+
+
+    const yesterday =
+      this.dateMinusDays(
+        today,
+        1,
+      );
+
+
+    if (
+      streak.lastCollectionDate !== today &&
+      streak.lastCollectionDate !== yesterday
+    ) {
+
+      streak.currentStreak = 0;
+
+      await this.collectionStreakRepository.save(
+        streak,
+      );
+
+    }
+
+
+    return {
+      currentStreak:
+        streak.currentStreak || 0,
+
+      longestStreak:
+        streak.longestStreak || 0,
+
+      lastCollectionDate:
+        streak.lastCollectionDate || null,
+    };
+
+  }
+
+
+  /* =======================================================
+     UPDATE COLLECTION STREAK
   ======================================================= */
 
   async updateCollectionStreak(
@@ -642,8 +762,7 @@ export class CollectionsService {
 
 
     if (
-      streak.lastCollectionDate ===
-      today
+      streak.lastCollectionDate === today
     ) {
 
       return streak;
@@ -659,18 +778,16 @@ export class CollectionsService {
 
 
     if (
-      streak.lastCollectionDate ===
-      yesterday
+      streak.lastCollectionDate === yesterday
     ) {
 
-      streak.currentStreak +=
-        1;
+      streak.currentStreak += 1;
 
     }
+
     else {
 
-      streak.currentStreak =
-        1;
+      streak.currentStreak = 1;
 
     }
 
@@ -681,7 +798,7 @@ export class CollectionsService {
 
     streak.longestStreak =
       Math.max(
-        streak.longestStreak,
+        Number(streak.longestStreak) || 0,
         streak.currentStreak,
       );
 
@@ -702,13 +819,12 @@ export class CollectionsService {
   ) {
 
     const items =
-      (
-        collection.items ||
-        []
-      ).sort(
-        (a,b) =>
-          a.position -
-          b.position,
+      [...(
+        collection.items || []
+      )].sort(
+        (a, b) =>
+          Number(a.position) -
+          Number(b.position),
       );
 
 
@@ -725,6 +841,9 @@ export class CollectionsService {
 
       coverUrl:
         collection.coverUrl,
+
+      shareToken:
+        collection.shareToken || null,
 
       itemCount:
         items.length,
@@ -791,7 +910,7 @@ export class CollectionsService {
 
 
   /* =======================================================
-     COVER
+     COLLECTION COVER
   ======================================================= */
 
   private async updateCollectionCover(
@@ -811,9 +930,7 @@ export class CollectionsService {
 
 
     if (!collection) {
-
       return;
-
     }
 
 
@@ -832,10 +949,8 @@ export class CollectionsService {
       });
 
 
-    if (!saved) {
-
+    if (!saved?.content) {
       return;
-
     }
 
 
@@ -843,17 +958,82 @@ export class CollectionsService {
       saved.content;
 
 
-    if (!content) {
+    collection.coverUrl =
+      content.coverUrl ||
+      content.videoUrl ||
+      null;
+
+
+    await this.collectionRepository.save(
+      collection,
+    );
+
+  }
+
+
+  /* =======================================================
+     REBUILD COVER
+  ======================================================= */
+
+  private async rebuildCollectionCover(
+    collectionId: number,
+  ) {
+
+    const collection =
+      await this.collectionRepository.findOne({
+
+        where: {
+          id:
+            collectionId,
+        },
+
+      });
+
+
+    if (!collection) {
+      return;
+    }
+
+
+    const firstItem =
+      await this.collectionItemRepository.findOne({
+
+        where: {
+          collectionId,
+        },
+
+        order: {
+          position: 'ASC',
+        },
+
+        relations: [
+          'savedItem',
+          'savedItem.content',
+        ],
+
+      });
+
+
+    if (!firstItem?.savedItem?.content) {
+
+      collection.coverUrl = null;
+
+      await this.collectionRepository.save(
+        collection,
+      );
 
       return;
 
     }
 
 
+    const content =
+      firstItem.savedItem.content;
+
+
     collection.coverUrl =
       content.coverUrl ||
       content.videoUrl ||
-      content.fileUrl ||
       null;
 
 
@@ -890,6 +1070,17 @@ export class CollectionsService {
 
 
   /* =======================================================
+     SHARE TOKEN
+  ======================================================= */
+
+  private generateShareToken(): string {
+
+    return randomBytes(24).toString('hex');
+
+  }
+
+
+  /* =======================================================
      DATE
   ======================================================= */
 
@@ -900,17 +1091,24 @@ export class CollectionsService {
 
 
     return [
-      now.getFullYear(),
+      now.getUTCFullYear(),
+
       String(
-        now.getMonth() + 1,
+        now.getUTCMonth() + 1,
       ).padStart(2, '0'),
+
       String(
-        now.getDate(),
+        now.getUTCDate(),
       ).padStart(2, '0'),
+
     ].join('-');
 
   }
 
+
+  /* =======================================================
+     DATE MINUS DAYS
+  ======================================================= */
 
   private dateMinusDays(
     date: string,
@@ -919,26 +1117,166 @@ export class CollectionsService {
 
     const d =
       new Date(
-        `${date}T00:00:00`,
+        `${date}T00:00:00Z`,
       );
 
 
-    d.setDate(
-      d.getDate() -
-      days,
+    d.setUTCDate(
+      d.getUTCDate() - days,
     );
 
 
     return [
-      d.getFullYear(),
+      d.getUTCFullYear(),
+
       String(
-        d.getMonth() + 1,
+        d.getUTCMonth() + 1,
       ).padStart(2, '0'),
+
       String(
-        d.getDate(),
+        d.getUTCDate(),
       ).padStart(2, '0'),
+
     ].join('-');
 
   }
+
+
+  /* =======================================================
+   FIND SHARED COLLECTION
+======================================================= */
+
+async findShared(
+  shareToken: string,
+) {
+
+  const cleanToken =
+    String(
+      shareToken || '',
+    ).trim();
+
+
+  if (!cleanToken) {
+
+    throw new BadRequestException(
+      'Share token is required.',
+    );
+
+  }
+
+
+  const collection =
+    await this.collectionRepository.findOne({
+
+      where: {
+        shareToken: cleanToken,
+      },
+
+      relations: [
+        'items',
+        'items.savedItem',
+        'items.savedItem.content',
+        'items.savedItem.content.creator',
+      ],
+
+    });
+
+
+  if (!collection) {
+
+    throw new NotFoundException(
+      'Shared collection not found.',
+    );
+
+  }
+
+
+  collection.items =
+    (collection.items || []).sort(
+      (a, b) =>
+        Number(a.position) -
+        Number(b.position),
+    );
+
+
+  /*
+   * Public response deliberately does NOT expose
+   * the owner's private collection controls.
+   */
+
+  return {
+    data: {
+      id: collection.id,
+
+      name: collection.name,
+
+      coverUrl:
+        collection.coverUrl,
+
+      itemCount:
+        collection.items?.length || 0,
+
+      items:
+        (collection.items || []).map(
+          item => ({
+
+            id: item.id,
+
+            position:
+              item.position,
+
+            savedItem:
+              item.savedItem
+                ? {
+
+                    contentId:
+                      item.savedItem.contentId,
+
+                    content:
+                      item.savedItem.content
+                        ? {
+
+                            id:
+                              item.savedItem.content.id,
+
+                            title:
+                              item.savedItem.content.title,
+
+                            type:
+                              item.savedItem.content.type,
+
+                            videoUrl:
+                              item.savedItem.content.videoUrl,
+
+                            fileUrl:
+                              item.savedItem.content.fileUrl,
+
+                            coverUrl:
+                              item.savedItem.content.coverUrl,
+
+                            price:
+                              item.savedItem.content.price,
+
+                            creatorUsername:
+                              item.savedItem.content.creator
+                                ?.username ||
+                              'User',
+
+                          }
+
+                        : null,
+
+                  }
+
+                : null,
+
+          }),
+        ),
+
+    },
+
+  };
+
+}
 
 }

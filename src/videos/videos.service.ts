@@ -893,15 +893,19 @@ export class VideosService {
               item.creatorId,
 
             creatorUsername:
-              item.creator?.username ||
-              'User',
+  item.creator?.username ||
+  'User',
 
-            creatorAvatar:
-              item.creator?.avatar ||
-              null,
+creatorEmail:
+  item.creator?.email ||
+  null,
 
-            comments:
-              item.comments || [],
+creatorAvatar:
+  item.creator?.avatar ||
+  null,
+
+comments:
+  item.comments || [],
 
             createdAt:
               item.createdAt,

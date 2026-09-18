@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 
 import {
@@ -13,11 +14,8 @@ import {
 } from 'typeorm';
 
 import { Video } from './video.entity';
-
 import { User } from '../users/user.entity';
-
 import { Understand } from '../understand/understand.entity';
-
 import { Library } from '../library/library.entity';
 
 
@@ -893,19 +891,22 @@ export class VideosService {
               item.creatorId,
 
             creatorUsername:
-  item.creator?.username ||
-  'User',
+              item.creator?.username ||
+              'User',
 
-creatorEmail:
-  item.creator?.email ||
-  null,
+            // Seller email for
+            // marketplace enquiries.
+            // Password/hash is NOT exposed.
+            creatorEmail:
+              item.creator?.email ||
+              null,
 
-creatorAvatar:
-  item.creator?.avatar ||
-  null,
+            creatorAvatar:
+              item.creator?.avatar ||
+              null,
 
-comments:
-  item.comments || [],
+            comments:
+              item.comments || [],
 
             createdAt:
               item.createdAt,
@@ -921,11 +922,10 @@ comments:
   // ==========================================
   // UPDATE CONTENT
   //
-  // IMPORTANT:
-  // This now expects JSON.
+  // Expects JSON.
   //
-  // Cloudinary media has already been
-  // uploaded by the browser.
+  // Cloudinary media has already
+  // been uploaded by the browser.
   // ==========================================
 
   async updateVideo(
@@ -963,6 +963,43 @@ comments:
 
     }
 
+
+    // ------------------------------------------
+    // Only these fields are allowed to change.
+    // ------------------------------------------
+
+    const allowedFields = [
+      'title',
+      'context',
+      'category',
+      'type',
+      'videoUrl',
+      'fileUrl',
+      'coverUrl',
+      'price',
+    ];
+
+
+    const hasUpdate =
+      allowedFields.some(
+        (field) =>
+          dto &&
+          dto[field] !== undefined,
+      );
+
+
+    if (!hasUpdate) {
+
+      throw new BadRequestException(
+        'No valid fields were provided for update',
+      );
+
+    }
+
+
+    // ------------------------------------------
+    // Apply updates
+    // ------------------------------------------
 
     if (
       dto.title !== undefined
@@ -1053,3 +1090,4 @@ comments:
   }
 
 }
+

@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { VideosController } from './videos.controller';
 import { VideosService } from './videos.service';
-
 import { Video } from './video.entity';
+
 import { User } from '../users/user.entity';
 import { Understand } from '../understand/understand.entity';
-
 import { Library } from '../library/library.entity';
+
+import { ReviewsModule } from '../reviews/reviews.module';
+
 
 @Module({
   imports: [
@@ -18,12 +21,20 @@ import { Library } from '../library/library.entity';
       Understand,
       Library,
     ]),
+
+    ReviewsModule,
   ],
 
-  controllers: [VideosController],
+  controllers: [
+    VideosController,
+  ],
 
-  providers: [VideosService],
+  providers: [
+    VideosService,
+  ],
 
-  exports: [VideosService],
+  exports: [
+    VideosService,
+  ],
 })
 export class VideosModule {}

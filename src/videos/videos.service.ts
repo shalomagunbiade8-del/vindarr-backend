@@ -17,6 +17,7 @@ import { Video } from './video.entity';
 import { User } from '../users/user.entity';
 import { Understand } from '../understand/understand.entity';
 import { Library } from '../library/library.entity';
+import { ReviewsService } from '../reviews/reviews.service';
 
 
 @Injectable()
@@ -24,23 +25,26 @@ export class VideosService {
 
   constructor(
 
-    @InjectRepository(Video)
-    private readonly videoRepository:
-      Repository<Video>,
+  @InjectRepository(Video)
+  private readonly videoRepository:
+    Repository<Video>,
 
-    @InjectRepository(User)
-    private readonly userRepository:
-      Repository<User>,
+  @InjectRepository(User)
+  private readonly userRepository:
+    Repository<User>,
 
-    @InjectRepository(Understand)
-    private readonly understandRepository:
-      Repository<Understand>,
+  @InjectRepository(Understand)
+  private readonly understandRepository:
+    Repository<Understand>,
 
-    @InjectRepository(Library)
-    private readonly libraryRepository:
-      Repository<Library>,
+  @InjectRepository(Library)
+  private readonly libraryRepository:
+    Repository<Library>,
 
-  ) {}
+  private readonly reviewsService:
+    ReviewsService,
+
+) {}
 
 
   // ==========================================
@@ -298,82 +302,103 @@ export class VideosService {
   // ==========================================
 
   async findOne(
-    id: number,
-  ) {
+  id: number,
+) {
 
-    const video =
-      await this.videoRepository.findOne({
+  const video =
+    await this.videoRepository.findOne({
 
-        where: {
-          id,
-        },
+      where: {
+        id,
+      },
 
-        relations: [
-          'creator',
-          'comments',
-          'comments.author',
-        ],
+      relations: [
+        'creator',
+        'comments',
+        'comments.author',
+      ],
 
-      });
-
-
-    if (!video) {
-
-      throw new NotFoundException(
-        'Content not found',
-      );
-
-    }
+    });
 
 
-    return {
+  if (!video) {
 
-      id:
-        video.id,
-
-      title:
-        video.title,
-
-      category:
-        video.category,
-
-      context:
-        video.context,
-
-      type:
-        video.type,
-
-      videoUrl:
-        video.videoUrl,
-
-      fileUrl:
-        video.fileUrl,
-
-      coverUrl:
-        video.coverUrl,
-
-      price:
-        video.price,
-
-      creatorId:
-        video.creatorId,
-
-      creatorUsername:
-        video.creator?.username,
-
-      creatorAvatar:
-        video.creator?.avatar,
-
-      comments:
-        video.comments,
-
-      createdAt:
-        video.createdAt,
-
-    };
+    throw new NotFoundException(
+      'Content not found',
+    );
 
   }
 
+
+  const rating =
+    await this.reviewsService.getProductRating(
+      video.id,
+    );
+
+
+  return {
+
+    id:
+      video.id,
+
+    title:
+      video.title,
+
+    category:
+      video.category,
+
+    context:
+      video.context,
+
+    type:
+      video.type,
+
+    videoUrl:
+      video.videoUrl,
+
+    fileUrl:
+      video.fileUrl,
+
+    coverUrl:
+      video.coverUrl,
+
+    price:
+      video.price,
+
+    creatorId:
+      video.creatorId,
+
+    creatorUsername:
+      video.creator?.username ||
+      'User',
+
+    creatorAvatar:
+      video.creator?.avatar ||
+      null,
+
+    creatorEmail:
+      video.creator?.email ||
+      null,
+
+    comments:
+      video.comments || [],
+
+    // =====================================
+    // REVIEWS
+    // =====================================
+
+    averageRating:
+      rating.averageRating,
+
+    totalReviews:
+      rating.totalReviews,
+
+    createdAt:
+      video.createdAt,
+
+  };
+
+}
 
   // ==========================================
   // RELATED

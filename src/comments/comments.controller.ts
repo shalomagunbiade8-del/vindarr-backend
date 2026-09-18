@@ -8,21 +8,24 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { AuthGuard } from '@nestjs/passport';
+
 import { CommentsService } from './comments.service';
 
 import { CreateCommentDto } from './dto/create-comment.dto';
 
-import { AuthGuard } from '@nestjs/passport';
 
 @Controller('comments')
 export class CommentsController {
 
   constructor(
-    private commentsService: CommentsService,
+    private readonly commentsService:
+      CommentsService,
   ) {}
 
+
   // =====================================
-  // CREATE COMMENT
+  // CREATE COMMENT / REPLY
   // =====================================
 
   @UseGuards(AuthGuard('jwt'))
@@ -39,13 +42,14 @@ export class CommentsController {
 
   }
 
+
   // =====================================
   // VIDEO COMMENTS
   // =====================================
 
   @Get('video/:videoId')
   getVideoComments(
-    @Param('videoId') videoId: number,
+    @Param('videoId') videoId: string,
   ) {
 
     return this.commentsService.getVideoComments(
@@ -54,13 +58,14 @@ export class CommentsController {
 
   }
 
+
   // =====================================
   // STORY COMMENTS
   // =====================================
 
   @Get('story/:storyId')
   getStoryComments(
-    @Param('storyId') storyId: number,
+    @Param('storyId') storyId: string,
   ) {
 
     return this.commentsService.getStoryComments(

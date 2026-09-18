@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { InjectRepository } from '@nestjs/typeorm';
@@ -24,6 +25,58 @@ export class CommentsService {
 
 
   // =====================================
+  // GET AUTHENTICATED USER ID
+  // =====================================
+
+  private getUserId(
+    user: User | any,
+  ): number {
+
+    /*
+     * Depending on your JWT strategy, req.user
+     * may contain either:
+     *
+     *   user.id
+     *
+     * or:
+     *
+     *   user.userId
+     *
+     * or occasionally:
+     *
+     *   user.sub
+     *
+     * We support all three.
+     */
+
+    const rawId =
+      user?.id ??
+      user?.userId ??
+      user?.sub;
+
+
+    const userId =
+      Number(rawId);
+
+
+    if (
+      !Number.isInteger(userId) ||
+      userId <= 0
+    ) {
+
+      throw new UnauthorizedException(
+        'Authenticated user ID is missing or invalid',
+      );
+
+    }
+
+
+    return userId;
+
+  }
+
+
+  // =====================================
   // CREATE COMMENT / REPLY
   // =====================================
 
@@ -31,6 +84,14 @@ export class CommentsService {
     dto: CreateCommentDto,
     user: User,
   ) {
+
+    // =====================================
+    // AUTHENTICATED USER
+    // =====================================
+
+    const userId =
+      this.getUserId(user);
+
 
     // =====================================
     // TEXT VALIDATION
@@ -72,9 +133,6 @@ export class CommentsService {
     }
 
 
-    // A comment cannot belong to both
-    // a video and a story.
-
     if (hasVideo && hasStory) {
 
       throw new BadRequestException(
@@ -85,7 +143,7 @@ export class CommentsService {
 
 
     // =====================================
-    // NORMALIZE VIDEO ID
+    // VIDEO ID
     // =====================================
 
     let videoId: number | undefined;
@@ -112,7 +170,7 @@ export class CommentsService {
 
 
     // =====================================
-    // NORMALIZE STORY ID
+    // STORY ID
     // =====================================
 
     let storyId: number | undefined;
@@ -139,7 +197,7 @@ export class CommentsService {
 
 
     // =====================================
-    // PARENT COMMENT VALIDATION
+    // PARENT COMMENT
     // =====================================
 
     let parentId:
@@ -192,16 +250,12 @@ export class CommentsService {
 
 
       // ===================================
-      // VIDEO REPLY VALIDATION
+      // VIDEO PARENT
       // ===================================
 
-      if (hasVideo) {
-
-        // Because hasVideo is true,
-        // videoId has been validated above.
+      if (videoId !== undefined) {
 
         if (
-          videoId === undefined ||
           !parent.video ||
           Number(parent.video.id) !==
             videoId
@@ -217,16 +271,12 @@ export class CommentsService {
 
 
       // ===================================
-      // STORY REPLY VALIDATION
+      // STORY PARENT
       // ===================================
 
-      if (hasStory) {
-
-        // Because hasStory is true,
-        // storyId has been validated above.
+      if (storyId !== undefined) {
 
         if (
-          storyId === undefined ||
           !parent.story ||
           Number(parent.story.id) !==
             storyId
@@ -267,19 +317,7 @@ export class CommentsService {
 
 
     // =====================================
-    // INSERT COMMENT
-    // =====================================
-    //
-    // IMPORTANT:
-    //
-    // We deliberately do NOT use:
-    //
-    //   commentRepository.save()
-    //
-    // for creating the comment.
-    //
-    // This performs a direct INSERT and avoids
-    // TypeORM's persistence/update graph.
+    // INSERT DATA
     // =====================================
 
     const insertData: any = {
@@ -291,7 +329,7 @@ export class CommentsService {
       parentId,
 
       author: {
-        id: Number(user.id),
+        id: userId,
       },
 
     };
@@ -323,6 +361,10 @@ export class CommentsService {
     }
 
 
+    // =====================================
+    // INSERT
+    // =====================================
+
     const insertResult =
       await this.commentRepository
         .createQueryBuilder()
@@ -336,7 +378,7 @@ export class CommentsService {
 
 
     // =====================================
-    // GET INSERTED ID
+    // INSERTED ID
     // =====================================
 
     const insertedId =
@@ -354,7 +396,7 @@ export class CommentsService {
 
 
     // =====================================
-    // RETURN CREATED COMMENT
+    // RETURN COMMENT
     // =====================================
 
     const result =
@@ -544,6 +586,10 @@ export class CommentsService {
       Number(commentId);
 
 
+    const userId =
+      this.getUserId(user);
+
+
     const comment =
       await this.commentRepository.findOne({
 
@@ -570,7 +616,7 @@ export class CommentsService {
     if (
       !comment.author ||
       Number(comment.author.id) !==
-        Number(user.id)
+        userId
     ) {
 
       throw new BadRequestException(

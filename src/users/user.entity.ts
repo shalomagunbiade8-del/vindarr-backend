@@ -1,9 +1,14 @@
-import { Entity, Column, PrimaryGeneratedColumn,  CreateDateColumn, } from 'typeorm';
-import { OneToMany } from 'typeorm';
-import { Comment } from '../comments/comment.entity'; 
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  OneToMany,
+} from 'typeorm';
+
+import { Comment } from '../comments/comment.entity';
 import { Find } from '../find/find.entity';
 import { FindReply } from '../find-reply/find-reply.entity';
-
 
 @Entity()
 export class User {
@@ -11,60 +16,74 @@ export class User {
   id: number;
 
   @Column({ unique: true })
-username: string;
+  username: string;
 
   @Column({ unique: true })
   email: string;
 
-  @Column({select:false})
-  password: string;
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    select: false,
+  })
+  password: string | null;
+
+  // Google account ID.
+  // Nullable because normal email/password users
+  // do not necessarily have Google linked.
+  @Column({
+    type: 'varchar',
+    nullable: true,
+    unique: true,
+  })
+  googleId: string | null;
 
   @Column({ default: 'learner' })
   role: string;
 
   @Column({ nullable: true })
-avatar: string;
+avatar: string | null;
 
-@Column({ nullable: true })
-bio: string;
+  @Column({ nullable: true })
+  bio: string;
 
-@Column({ default: 0 })
+  @Column({ default: 0 })
   totalUnderstand: number;
 
   @CreateDateColumn()
-createdAt: Date;
+  createdAt: Date;
 
-  @OneToMany(() => Comment, comment => comment.author)
-comments: Comment[]; 
+  @OneToMany(
+    () => Comment,
+    comment => comment.author,
+  )
+  comments: Comment[];
 
-// bank details for coaches
-@Column({ nullable: true })
-bankName: string;
+  // Bank details for coaches
+  @Column({ nullable: true })
+  bankName: string;
 
-@Column({ nullable: true })
-accountNumber: string;
+  @Column({ nullable: true })
+  accountNumber: string;
 
-@Column({ nullable: true })
-accountName: string;
+  @Column({ nullable: true })
+  accountName: string;
 
-@Column({ default: 0 })
-purviewCount: number;
+  @Column({ default: 0 })
+  purviewCount: number;
 
-@Column({
-default:true,
-})
-emailNotifications:boolean;
+  @Column({ default: true })
+  emailNotifications: boolean;
 
-@OneToMany(
-  () => Find,
-  find => find.creator,
-)
-finds: Find[];
+  @OneToMany(
+    () => Find,
+    find => find.creator,
+  )
+  finds: Find[];
 
-@OneToMany(
-  () => FindReply,
-  reply => reply.creator,
-)
-findReply: FindReply[];
-
+  @OneToMany(
+    () => FindReply,
+    reply => reply.creator,
+  )
+  findReply: FindReply[];
 }

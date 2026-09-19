@@ -1,67 +1,77 @@
-import { Injectable } from '@nestjs/common';
-
-import { PassportStrategy } from '@nestjs/passport';
+import {
+Injectable,
+} from '@nestjs/common';
 
 import {
-  ExtractJwt,
-  Strategy,
+PassportStrategy,
+} from '@nestjs/passport';
+
+import {
+ExtractJwt,
+Strategy,
 } from 'passport-jwt';
 
+import {
+ConfigService,
+} from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy
-  extends PassportStrategy(Strategy) {
+extends PassportStrategy(
+Strategy,
+) {
 
-  constructor() {
-
-    super({
-
-      jwtFromRequest:
-        ExtractJwt.fromAuthHeaderAsBearerToken(),
-
-      ignoreExpiration: false,
-
-      secretOrKey:
-        process.env.JWT_SECRET,
-
-    });
-
-  }
+constructor(
+private readonly configService:
+ConfigService,
+) {
 
 
-  async validate(
-    payload: any,
-  ) {
+super({
 
-    return {
+  jwtFromRequest:
+    ExtractJwt.fromAuthHeaderAsBearerToken(),
 
-      // =====================================
-      // IMPORTANT
-      // =====================================
-      //
-      // Make the authenticated user's database
-      // ID available as req.user.id.
-      //
-      // payload.sub is the user ID contained
-      // in the JWT.
-      //
-      id:
-        Number(payload.sub),
+  ignoreExpiration: false,
 
-      userId:
-        Number(payload.sub),
+  secretOrKey:
+    configService.getOrThrow<string>(
+      'JWT_SECRET',
+    ),
 
-      email:
-        payload.email,
+});
 
-      role:
-        payload.role,
 
-      username:
-        payload.username,
+}
 
-    };
+async validate(
+payload: any,
+) {
 
-  }
+
+return {
+
+  // User ID from JWT subject.
+  id:
+    Number(payload.sub),
+
+  // Kept for compatibility with
+  // existing Vindarr code.
+  userId:
+    Number(payload.sub),
+
+  email:
+    payload.email,
+
+  role:
+    payload.role,
+
+  username:
+    payload.username,
+
+};
+
+
+}
 
 }

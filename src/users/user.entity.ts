@@ -41,11 +41,20 @@ export class User {
   @Column({ default: 'learner' })
   role: string;
 
-  @Column({ nullable: true })
+  
+@Column({
+  type: 'varchar',
+  nullable: true,
+})
 avatar: string | null;
 
-  @Column({ nullable: true })
-  bio: string;
+
+
+  @Column({
+  type: 'varchar',
+  nullable: true,
+})
+bio: string | null;
 
   @Column({ default: 0 })
   totalUnderstand: number;

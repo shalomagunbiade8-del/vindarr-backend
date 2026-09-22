@@ -330,565 +330,544 @@ export class VideosService {
   // Only /videos/feed uses this system.
   // ==========================================
 
-  async getDiscoveryFeed(
-    page: number = 1,
-    limit: number = 10,
-  ) {
+  // ==========================================
+// FAIR DISCOVERY FEED
+//
+// GET /videos/feed?page=1&limit=10
+//
+// Approximately:
+// 30% recent content
+// 70% older content
+//
+// Database-safe version.
+// Does NOT use MD5(), CONCAT(), or
+// database-specific random functions.
+// ==========================================
 
-    page =
+async getDiscoveryFeed(
+  page: number = 1,
+  limit: number = 10,
+) {
+
+  page =
+    Math.max(
+      1,
+      Number(page) || 1,
+    );
+
+  limit =
+    Math.min(
+      50,
       Math.max(
         1,
-        Number(page) || 1,
-      );
+        Number(limit) || 10,
+      ),
+    );
 
 
-    limit =
-      Math.min(
-        50,
-        Math.max(
-          1,
-          Number(limit) || 10,
-        ),
-      );
+  // ----------------------------------------
+  // CURRENT UTC DAY
+  // ----------------------------------------
 
+  const now =
+    new Date();
 
-    // ----------------------------------------
-    // CURRENT UTC DAY
-    //
-    // This gives every day a deterministic
-    // seed.
-    // ----------------------------------------
-
-    const now =
-      new Date();
-
-
-    const year =
-      now.getUTCFullYear();
-
-
-    const month =
-      String(
-        now.getUTCMonth() + 1,
-      ).padStart(
-        2,
-        '0',
-      );
-
-
-    const day =
-      String(
+  const todayStart =
+    new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
         now.getUTCDate(),
-      ).padStart(
-        2,
-        '0',
-      );
+      ),
+    );
 
 
-    const dailySeed =
-      `${year}-${month}-${day}`;
+  // ----------------------------------------
+  // RECENT = LAST 3 UTC DAYS
+  // ----------------------------------------
+
+  const recentSince =
+    new Date(
+      todayStart.getTime() -
+      3 *
+      24 *
+      60 *
+      60 *
+      1000,
+    );
 
 
-    // ----------------------------------------
-    // FIXED DAILY RECENT WINDOW
-    //
-    // Instead of moving every minute, the
-    // cutoff is anchored to the beginning
-    // of the current UTC day.
-    //
-    // This makes pagination much more stable.
-    //
-    // Approximately the latest 72+ hours are
-    // treated as recent.
-    // ----------------------------------------
+  // ----------------------------------------
+  // PAGE MIX
+  //
+  // limit 10:
+  // 3 recent
+  // 7 older
+  // ----------------------------------------
 
-    const todayStart =
-      new Date(
-        Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          now.getUTCDate(),
-        ),
-      );
-
-
-    const recentSince =
-      new Date(
-        todayStart.getTime() -
-        3 *
-        24 *
-        60 *
-        60 *
-        1000,
-      );
-
-
-    // ----------------------------------------
-    // PAGE MIX
-    //
-    // Example with limit = 10:
-    //
-    // 3 recent
-    // 7 older
-    // ----------------------------------------
-
-    const recentCount =
-      Math.min(
-        limit,
-        Math.max(
-          1,
-          Math.round(
-            limit * 0.3,
-          ),
-        ),
-      );
-
-
-    const olderCount =
+  const recentCount =
+    Math.min(
+      limit,
       Math.max(
-        0,
-        limit -
-        recentCount,
-      );
+        1,
+        Math.round(
+          limit * 0.3,
+        ),
+      ),
+    );
+
+  const olderCount =
+    Math.max(
+      0,
+      limit -
+      recentCount,
+    );
 
 
-    // ----------------------------------------
-    // PAGINATION FOR EACH POOL
-    // ----------------------------------------
+  // ----------------------------------------
+  // PAGINATION
+  // ----------------------------------------
 
-    const recentSkip =
-      (page - 1) *
-      recentCount;
+  const recentSkip =
+    (page - 1) *
+    recentCount;
 
-
-    const olderSkip =
-      (page - 1) *
-      olderCount;
-
-
-    // ----------------------------------------
-    // COUNT RECENT + OLDER CONTENT
-    // ----------------------------------------
-
-    const [
-      recentTotal,
-      olderTotal,
-    ] =
-      await Promise.all([
-
-        this.videoRepository.count({
-
-          where: {
-            createdAt:
-              MoreThanOrEqual(
-                recentSince,
-              ),
-          },
-
-        }),
-
-        this.videoRepository.count({
-
-          where: {
-            createdAt:
-              LessThan(
-                recentSince,
-              ),
-          },
-
-        }),
-
-      ]);
+  const olderSkip =
+    (page - 1) *
+    olderCount;
 
 
-    // ----------------------------------------
-    // RECENT CONTENT
-    //
-    // PostgreSQL MD5 gives us a deterministic
-    // shuffle for the current day.
-    // ----------------------------------------
+  // ----------------------------------------
+  // COUNT BOTH POOLS
+  // ----------------------------------------
 
-    const recentQuery =
-      this.videoRepository
-        .createQueryBuilder(
-          'video',
-        )
+  const [
+    recentTotal,
+    olderTotal,
+  ] =
+    await Promise.all([
 
-        .leftJoinAndSelect(
-          'video.creator',
-          'creator',
-        )
+      this.videoRepository.count({
 
-        .leftJoinAndSelect(
-          'video.comments',
-          'comments',
-        )
+        where: {
+          createdAt:
+            MoreThanOrEqual(
+              recentSince,
+            ),
+        },
 
-        .leftJoinAndSelect(
-          'comments.author',
-          'commentAuthor',
-        )
+      }),
 
-        .where(
-          'video.createdAt >= :recentSince',
-          {
+      this.videoRepository.count({
+
+        where: {
+          createdAt:
+            LessThan(
+              recentSince,
+            ),
+        },
+
+      }),
+
+    ]);
+
+
+  // ----------------------------------------
+  // LOAD RECENT CONTENT
+  //
+  // IMPORTANT:
+  // Use normal TypeORM ordering.
+  // No MD5 / CONCAT / database-specific SQL.
+  // ----------------------------------------
+
+  const recentVideos =
+    await this.videoRepository.find({
+
+      where: {
+        createdAt:
+          MoreThanOrEqual(
             recentSince,
-          },
-        )
+          ),
+      },
 
-        .orderBy(
-          `MD5(
-            CONCAT(
-              CAST(video.id AS TEXT),
-              ':',
-              :dailySeed,
-              ':recent'
-            )
-          )`,
-          'ASC',
-        )
+      relations: [
+        'creator',
+        'comments',
+        'comments.author',
+      ],
 
-        .setParameter(
-          'dailySeed',
-          dailySeed,
-        )
+      order: {
+        createdAt: 'DESC',
+        id: 'DESC',
+      },
 
-        .skip(
-          recentSkip,
-        )
+      skip:
+        recentSkip,
 
-        .take(
+      take:
+        recentCount,
+
+    });
+
+
+  // ----------------------------------------
+  // LOAD OLDER CONTENT
+  // ----------------------------------------
+
+  let olderVideos:
+    Video[] = [];
+
+
+  if (
+    olderCount > 0 &&
+    olderTotal > 0
+  ) {
+
+    olderVideos =
+      await this.videoRepository.find({
+
+        where: {
+          createdAt:
+            LessThan(
+              recentSince,
+            ),
+        },
+
+        relations: [
+          'creator',
+          'comments',
+          'comments.author',
+        ],
+
+        order: {
+          createdAt: 'DESC',
+          id: 'DESC',
+        },
+
+        skip:
+          olderSkip,
+
+        take:
+          olderCount,
+
+      });
+
+  }
+
+
+  // ----------------------------------------
+  // DETERMINISTIC DAILY ROTATION
+  //
+  // Instead of relying on MD5 in SQL,
+  // rotate the page positions in JavaScript.
+  //
+  // This is database-independent.
+  // ----------------------------------------
+
+  const dailyNumber =
+    Number(
+      `${now.getUTCFullYear()}${String(
+        now.getUTCMonth() + 1,
+      ).padStart(2, '0')}${String(
+        now.getUTCDate(),
+      ).padStart(2, '0')}`,
+    );
+
+
+  const rotate =
+    <T>(
+      items: T[],
+      offset: number,
+    ): T[] => {
+
+      if (
+        items.length <= 1
+      ) {
+
+        return items;
+
+      }
+
+
+      const safeOffset =
+        Math.abs(
+          offset,
+        ) %
+        items.length;
+
+
+      return [
+
+        ...items.slice(
+          safeOffset,
+        ),
+
+        ...items.slice(
+          0,
+          safeOffset,
+        ),
+
+      ];
+
+    };
+
+
+  const rotatedRecent =
+    rotate(
+      recentVideos,
+      dailyNumber %
+      Math.max(
+        1,
+        recentVideos.length,
+      ),
+    );
+
+
+  const rotatedOlder =
+    rotate(
+      olderVideos,
+      (
+        dailyNumber +
+        7
+      ) %
+      Math.max(
+        1,
+        olderVideos.length,
+      ),
+    );
+
+
+  // ----------------------------------------
+  // INTERLEAVE RECENT + OLDER
+  //
+  // Example:
+  //
+  // R O O R O O R O O O
+  // ----------------------------------------
+
+  const result:
+    Video[] = [];
+
+
+  let recentIndex =
+    0;
+
+  let olderIndex =
+    0;
+
+
+  const recentSlots =
+    new Set<number>();
+
+
+  if (
+    recentCount > 0
+  ) {
+
+    for (
+      let i = 0;
+      i < recentCount;
+      i++
+    ) {
+
+      const slot =
+        Math.floor(
+          (
+            i *
+            limit
+          ) /
           recentCount,
         );
 
 
-    const recentVideos =
-      await recentQuery.getMany();
-
-
-    // ----------------------------------------
-    // OLDER CONTENT
-    //
-    // Older posts receive their own independent
-    // daily shuffle.
-    //
-    // This is what prevents older content from
-    // being permanently buried beneath new posts.
-    // ----------------------------------------
-
-    let olderVideos:
-      Video[] = [];
-
-
-    if (
-      olderCount > 0
-    ) {
-
-      const olderQuery =
-        this.videoRepository
-          .createQueryBuilder(
-            'video',
-          )
-
-          .leftJoinAndSelect(
-            'video.creator',
-            'creator',
-          )
-
-          .leftJoinAndSelect(
-            'video.comments',
-            'comments',
-          )
-
-          .leftJoinAndSelect(
-            'comments.author',
-            'commentAuthor',
-          )
-
-          .where(
-            'video.createdAt < :recentSince',
-            {
-              recentSince,
-            },
-          )
-
-          .orderBy(
-            `MD5(
-              CONCAT(
-                CAST(video.id AS TEXT),
-                ':',
-                :dailySeed,
-                ':older'
-              )
-            )`,
-            'ASC',
-          )
-
-          .setParameter(
-            'dailySeed',
-            dailySeed,
-          )
-
-          .skip(
-            olderSkip,
-          )
-
-          .take(
-            olderCount,
-          );
-
-
-      olderVideos =
-        await olderQuery.getMany();
+      recentSlots.add(
+        slot,
+      );
 
     }
-
-
-    // ----------------------------------------
-    // INTERLEAVE RECENT + OLDER
-    //
-    // For 10 posts, the target pattern is
-    // approximately:
-    //
-    // R O O R O O R O O O
-    //
-    // If one pool runs out, the other pool
-    // fills the remaining positions.
-    // ----------------------------------------
-
-    const result:
-      Video[] = [];
-
-
-    let recentIndex =
-      0;
-
-
-    let olderIndex =
-      0;
-
-
-    // ----------------------------------------
-    // DETERMINE RECENT SLOTS
-    // ----------------------------------------
-
-    const recentSlots =
-      new Set<number>();
-
-
-    if (
-      recentCount > 0
-    ) {
-
-      for (
-        let i = 0;
-        i < recentCount;
-        i++
-      ) {
-
-        const slot =
-          Math.floor(
-            (
-              i *
-              limit
-            ) /
-            recentCount,
-          );
-
-
-        recentSlots.add(
-          slot,
-        );
-
-      }
-
-    }
-
-
-    // ----------------------------------------
-    // BUILD PAGE
-    // ----------------------------------------
-
-    for (
-      let slot = 0;
-      slot < limit;
-      slot++
-    ) {
-
-      const shouldUseRecent =
-        recentSlots.has(
-          slot,
-        );
-
-
-      // Prefer a recent post when this is
-      // one of the recent positions.
-
-      if (
-        shouldUseRecent &&
-        recentIndex <
-          recentVideos.length
-      ) {
-
-        result.push(
-          recentVideos[
-            recentIndex
-          ],
-        );
-
-
-        recentIndex++;
-
-
-        continue;
-
-      }
-
-
-      // Otherwise prefer older content.
-
-      if (
-        olderIndex <
-          olderVideos.length
-      ) {
-
-        result.push(
-          olderVideos[
-            olderIndex
-          ],
-        );
-
-
-        olderIndex++;
-
-
-        continue;
-
-      }
-
-
-      // If older content ran out, use any
-      // remaining recent content.
-
-      if (
-        recentIndex <
-          recentVideos.length
-      ) {
-
-        result.push(
-          recentVideos[
-            recentIndex
-          ],
-        );
-
-
-        recentIndex++;
-
-      }
-
-    }
-
-
-    // ----------------------------------------
-    // HAS MORE
-    // ----------------------------------------
-
-    const recentHasMore =
-      (
-        recentSkip +
-        recentVideos.length
-      ) <
-      recentTotal;
-
-
-    const olderHasMore =
-      olderCount > 0 &&
-      (
-        olderSkip +
-        olderVideos.length
-      ) <
-      olderTotal;
-
-
-    const hasMore =
-      recentHasMore ||
-      olderHasMore;
-
-
-    // ----------------------------------------
-    // RESPONSE
-    // ----------------------------------------
-
-    return {
-
-      data:
-        result.map(
-          (v) => ({
-
-            id:
-              v.id,
-
-            title:
-              v.title,
-
-            category:
-              v.category,
-
-            context:
-              v.context,
-
-            type:
-              v.type,
-
-            videoUrl:
-              v.videoUrl,
-
-            fileUrl:
-              v.fileUrl,
-
-            coverUrl:
-              v.coverUrl,
-
-            price:
-              v.price,
-
-            understandCount:
-              v.understandCount,
-
-            creatorId:
-              v.creatorId,
-
-            creatorUsername:
-              v.creator?.username ||
-              'User',
-
-            creatorAvatar:
-              v.creator?.avatar ||
-              null,
-
-            comments:
-              v.comments ||
-              [],
-
-            createdAt:
-              v.createdAt,
-
-          }),
-        ),
-
-      total:
-        recentTotal +
-        olderTotal,
-
-      page,
-
-      limit,
-
-      hasMore,
-
-    };
 
   }
+
+
+  for (
+    let slot = 0;
+    slot < limit;
+    slot++
+  ) {
+
+    const shouldUseRecent =
+      recentSlots.has(
+        slot,
+      );
+
+
+    // --------------------------------------
+    // RECENT SLOT
+    // --------------------------------------
+
+    if (
+      shouldUseRecent &&
+      recentIndex <
+        rotatedRecent.length
+    ) {
+
+      result.push(
+        rotatedRecent[
+          recentIndex
+        ],
+      );
+
+      recentIndex++;
+
+      continue;
+
+    }
+
+
+    // --------------------------------------
+    // OLDER SLOT
+    // --------------------------------------
+
+    if (
+      olderIndex <
+        rotatedOlder.length
+    ) {
+
+      result.push(
+        rotatedOlder[
+          olderIndex
+        ],
+      );
+
+      olderIndex++;
+
+      continue;
+
+    }
+
+
+    // --------------------------------------
+    // FALLBACK TO REMAINING RECENT
+    // --------------------------------------
+
+    if (
+      recentIndex <
+        rotatedRecent.length
+    ) {
+
+      result.push(
+        rotatedRecent[
+          recentIndex
+        ],
+      );
+
+      recentIndex++;
+
+    }
+
+  }
+
+
+  // ----------------------------------------
+  // HAS MORE
+  // ----------------------------------------
+
+  const recentHasMore =
+    (
+      recentSkip +
+      recentVideos.length
+    ) <
+    recentTotal;
+
+
+  const olderHasMore =
+    olderCount > 0 &&
+    (
+      olderSkip +
+      olderVideos.length
+    ) <
+    olderTotal;
+
+
+  const hasMore =
+    recentHasMore ||
+    olderHasMore;
+
+
+  // ----------------------------------------
+  // RESPONSE
+  // ----------------------------------------
+
+  return {
+
+    data:
+      result.map(
+        (v) => ({
+
+          id:
+            v.id,
+
+          title:
+            v.title,
+
+          category:
+            v.category,
+
+          context:
+            v.context,
+
+          type:
+            v.type,
+
+          videoUrl:
+            v.videoUrl,
+
+          fileUrl:
+            v.fileUrl,
+
+          coverUrl:
+            v.coverUrl,
+
+          price:
+            v.price,
+
+          understandCount:
+            v.understandCount,
+
+          creatorId:
+            v.creatorId,
+
+          creatorUsername:
+            v.creator?.username ||
+            'User',
+
+          creatorAvatar:
+            v.creator?.avatar ||
+            null,
+
+          comments:
+            v.comments ||
+            [],
+
+          createdAt:
+            v.createdAt,
+
+        }),
+      ),
+
+    total:
+      recentTotal +
+      olderTotal,
+
+    page,
+
+    limit,
+
+    hasMore,
+
+  };
+
+}
 
 
   // ==========================================

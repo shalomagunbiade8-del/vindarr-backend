@@ -32,14 +32,6 @@ export class VideosController {
 
   // ==========================================
   // CREATE CONTENT
-  //
-  // POST /videos
-  //
-  // IMPORTANT:
-  // This endpoint now receives JSON only.
-  //
-  // The actual media has already been uploaded
-  // directly from the browser to Cloudinary.
   // ==========================================
 
   @UseGuards(
@@ -132,10 +124,6 @@ export class VideosController {
     }
 
 
-    // ----------------------------------------
-    // VIDEO MUST HAVE videoUrl
-    // ----------------------------------------
-
     if (
       type === 'video' &&
       !body.videoUrl
@@ -147,10 +135,6 @@ export class VideosController {
 
     }
 
-
-    // ----------------------------------------
-    // EBOOK MUST HAVE fileUrl + coverUrl
-    // ----------------------------------------
 
     if (
       type === 'ebook' &&
@@ -175,10 +159,6 @@ export class VideosController {
 
     }
 
-
-    // ----------------------------------------
-    // PRODUCTS
-    // ----------------------------------------
 
     if (
       (
@@ -208,16 +188,20 @@ export class VideosController {
         type,
 
         videoUrl:
-          body.videoUrl || null,
+          body.videoUrl ||
+          null,
 
         fileUrl:
-          body.fileUrl || null,
+          body.fileUrl ||
+          null,
 
         coverUrl:
-          body.coverUrl || null,
+          body.coverUrl ||
+          null,
 
         price:
-          body.price ?? 0,
+          body.price ??
+          0,
 
       },
 
@@ -229,25 +213,63 @@ export class VideosController {
 
 
   // ==========================================
-  // GET ALL VIDEOS
+  // FAIR DISCOVERY FEED
+  //
+  // GET /videos/feed?page=1&limit=10
+  //
+  // IMPORTANT:
+  // This MUST remain before @Get(':id').
   // ==========================================
 
-  @Get()
-  findAll(
+  @Get('feed')
+  getDiscoveryFeed(
+
     @Query('page')
     page: number = 1,
 
     @Query('limit')
     limit: number = 10,
+
   ) {
 
-    return this.videosService.findAll(
+    return this.videosService
+      .getDiscoveryFeed(
 
-      Number(page),
+        Number(page),
 
-      Number(limit),
+        Number(limit),
 
-    );
+      );
+
+  }
+
+
+  // ==========================================
+  // GET ALL VIDEOS
+  //
+  // Existing chronological endpoint.
+  // Newest first.
+  // ==========================================
+
+  @Get()
+  findAll(
+
+    @Query('page')
+    page: number = 1,
+
+    @Query('limit')
+    limit: number = 10,
+
+  ) {
+
+    return this.videosService
+      .findAll(
+
+        Number(page),
+
+        Number(limit),
+
+      );
 
   }
 
@@ -258,13 +280,16 @@ export class VideosController {
 
   @Get('search')
   searchVideos(
+
     @Query('q')
     query: string,
+
   ) {
 
-    return this.videosService.searchVideos(
-      query,
-    );
+    return this.videosService
+      .searchVideos(
+        query,
+      );
 
   }
 
@@ -275,27 +300,30 @@ export class VideosController {
 
   @Get('market')
   async getMarket(
+
     @Query('type')
     type?: string,
+
   ) {
 
-    return this.videosService.getMarket(
-      type,
-    );
+    return this.videosService
+      .getMarket(
+        type,
+      );
 
   }
 
 
   // ==========================================
   // USER POSTS
-  // IMPORTANT:
-  // MUST COME BEFORE :id
   // ==========================================
 
   @Get('user/:creatorId')
   getVideosByCreator(
+
     @Param('creatorId')
     creatorId: string,
+
   ) {
 
     return this.videosService
@@ -332,8 +360,10 @@ export class VideosController {
 
   @Get(':id/related')
   getRelatedVideos(
+
     @Param('id')
     id: string,
+
   ) {
 
     return this.videosService
@@ -350,13 +380,16 @@ export class VideosController {
 
   @Get(':id')
   findOne(
+
     @Param('id')
     id: string,
+
   ) {
 
-    return this.videosService.findOne(
-      Number(id),
-    );
+    return this.videosService
+      .findOne(
+        Number(id),
+      );
 
   }
 
@@ -370,20 +403,23 @@ export class VideosController {
   )
   @Delete(':id')
   deleteVideo(
+
     @Param('id')
     id: string,
 
     @Req()
     req: any,
+
   ) {
 
-    return this.videosService.deleteVideo(
+    return this.videosService
+      .deleteVideo(
 
-      Number(id),
+        Number(id),
 
-      req.user.userId,
+        req.user.userId,
 
-    );
+      );
 
   }
 
@@ -397,11 +433,13 @@ export class VideosController {
   )
   @Post(':id/understand')
   pressUnderstand(
+
     @Param('id')
     id: string,
 
     @Req()
     req: any,
+
   ) {
 
     return this.videosService
@@ -418,10 +456,6 @@ export class VideosController {
 
   // ==========================================
   // UPDATE
-  //
-  // PATCH /videos/:id
-  //
-  // Receives JSON.
   // ==========================================
 
   @UseGuards(
@@ -429,6 +463,7 @@ export class VideosController {
   )
   @Patch(':id')
   updateVideo(
+
     @Param('id')
     id: string,
 
@@ -437,17 +472,19 @@ export class VideosController {
 
     @Req()
     req: any,
+
   ) {
 
-    return this.videosService.updateVideo(
+    return this.videosService
+      .updateVideo(
 
-      Number(id),
+        Number(id),
 
-      body,
+        body,
 
-      req.user.userId,
+        req.user.userId,
 
-    );
+      );
 
   }
 

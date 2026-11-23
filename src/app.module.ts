@@ -58,6 +58,7 @@ import { CollectionsModule } from './collections/collections.module';
 import { Saved} from './saved/saved.entity';
 import { Collection} from './collections/collection.entity';
 import { ReviewsModule } from './reviews/reviews.module';
+import { DiscoverModule } from './discover/discover.module';
 
 
 
@@ -148,6 +149,7 @@ CloudinarySignatureModule,
 SavedModule,
 CollectionsModule,
 ReviewsModule,
+DiscoverModule,
 ],
 
   // =====================================
